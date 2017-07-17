@@ -116,10 +116,8 @@ public class TSpanShadowNode extends TextShadowNode {
         float startOffset = 0;
         float renderMethodScaling = 1;
         float textMeasure = paint.measureText(line);
-        float textAnchorShift = getTextAnchorShift(textMeasure);
 
         PathMeasure pm = null;
-
         if (textPath != null) {
             pm = new PathMeasure(textPath.getPath(), false);
             distance = pm.getLength();
@@ -137,52 +135,42 @@ public class TSpanShadowNode extends TextShadowNode {
         String current;
         PointF glyphPoint;
         PointF glyphDelta;
+        float glyphRotation;
         String previous = "";
+        float previousWidth = 0;
         char[] chars = line.toCharArray();
-        float[] widths = new float[length];
-        float glyphPosition = startOffset + textAnchorShift;
-
         double kerningValue = font.getDouble(PROP_KERNING) * mScale;
         boolean isKerningValueSet = font.getBoolean(PROP_IS_KERNING_VALUE_SET);
-
-        paint.getTextWidths(line, widths);
+        float glyphPosition = startOffset + getTextAnchorShift(textMeasure);
 
         for (int index = 0; index < length; index++) {
-            width = widths[index] * renderMethodScaling;
-            current = String.valueOf(chars[index]);
             glyph = new Path();
+            current = String.valueOf(chars[index]);
+            paint.getTextPath(current, 0, 1, 0, 0, glyph);
+            width = paint.measureText(current) * renderMethodScaling;
 
             if (isKerningValueSet) {
                 glyphPosition += kerningValue;
             } else {
-                float bothWidth = paint.measureText(previous + current);
-                float previousWidth = paint.measureText(previous);
-                float currentWidth = paint.measureText(current);
-                float kernedWidth = bothWidth - previousWidth;
-                float kerning = kernedWidth - currentWidth;
+                float bothWidth = paint.measureText(previous + current) * renderMethodScaling;
+                float kerning = bothWidth - previousWidth - width;
                 glyphPosition += kerning;
+                previousWidth = width;
                 previous = current;
             }
 
             glyphPoint = getGlyphPointFromContext(glyphPosition, width);
+            glyphRotation = getNextGlyphRotationFromContext();
             glyphDelta = getGlyphDeltaFromContext();
             glyphPosition += width;
             matrix = new Matrix();
 
             if (textPath != null) {
                 float halfway = width / 2;
-                float start = glyphPoint.x + glyphDelta.x;
-                float midpoint = start + halfway;
+                float midpoint = glyphPoint.x + glyphDelta.x + halfway;
 
                 if (midpoint > distance ) {
-                    if (start <= distance) {
-                        // Seems to cut off too early, see e.g. toap3, this shows the last "p"
-                        // Tangent will be from start position instead of midpoint
-                        midpoint = start;
-                        halfway = 0;
-                    } else {
-                        break;
-                    }
+                    break;
                 } else if (midpoint < 0) {
                     continue;
                 }
@@ -194,12 +182,12 @@ public class TSpanShadowNode extends TextShadowNode {
                 matrix.postTranslate(0, glyphPoint.y);
             } else {
                 matrix.setTranslate(
-                    glyphPoint.x + glyphDelta.x + textAnchorShift,
+                    glyphPoint.x + glyphDelta.x,
                     glyphPoint.y + glyphDelta.y
                 );
             }
 
-            paint.getTextPath(current, 0, 1, 0, 0, glyph);
+            matrix.preRotate(glyphRotation);
             glyph.transform(matrix);
             path.addPath(glyph);
         }
@@ -212,30 +200,18 @@ public class TSpanShadowNode extends TextShadowNode {
 
         paint.setTextAlign(Paint.Align.LEFT);
 
-        RectF vb = getSvgShadowNode().getViewBox();
-        float height = vb.height();
-        float ch = getCanvasHeight();
-        float heightScale = height / ch;
-
-        SvgViewShadowNode svg = getSvgShadowNode();
-        ReactShadowNode node = this;
-        while (node != null && !node.equals(svg)) {
-
-            if (node instanceof VirtualNode) {
-                VirtualNode v = ((VirtualNode) node);
-                heightScale /= v.getScaleY();
-            }
-
-            node = node.getParent();
-        }
-
-        float fontSize = (float)font.getDouble(PROP_FONT_SIZE) * mScale * heightScale;
-        float letterSpacing = (float)font.getDouble(PROP_LETTER_SPACING) * mScale * heightScale;
+        float fontSize = (float)font.getDouble(PROP_FONT_SIZE) * mScale;
+        float letterSpacing = (float)font.getDouble(PROP_LETTER_SPACING) * mScale;
 
         paint.setTextSize(fontSize);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             paint.setLetterSpacing(letterSpacing / fontSize);  // setLetterSpacing is only available from LOLLIPOP and on
         }
+
+        int decoration = getTextDecoration();
+
+        paint.setUnderlineText(decoration == TEXT_DECORATION_UNDERLINE);
+        paint.setStrikeThruText(decoration == TEXT_DECORATION_LINE_THROUGH);
 
         boolean isBold = font.hasKey(PROP_FONT_WEIGHT) && "bold".equals(font.getString(PROP_FONT_WEIGHT));
         boolean isItalic = font.hasKey(PROP_FONT_STYLE) && "italic".equals(font.getString(PROP_FONT_STYLE));
