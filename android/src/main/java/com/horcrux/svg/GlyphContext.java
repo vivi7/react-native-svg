@@ -18,7 +18,6 @@ import com.facebook.react.bridge.WritableMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -36,6 +35,8 @@ class GlyphContext {
     private ArrayList<Float> mRotations;
     private ArrayList<Float> mDeltaXs;
     private ArrayList<Float> mDeltaYs;
+    private ArrayList<String> mXs;
+    private ArrayList<String> mYs;
 
     private @Nonnull PointF mCurrentLocation;
     private @Nonnull PointF mCurrentDelta;
@@ -62,6 +63,8 @@ class GlyphContext {
         mRotations = new ArrayList<>();
         mDeltaXs = new ArrayList<>();
         mDeltaYs = new ArrayList<>();
+        mXs = new ArrayList<>();
+        mYs = new ArrayList<>();
 
         mCurrentLocation = new PointF();
         mCurrentDelta = new PointF();
@@ -72,12 +75,12 @@ class GlyphContext {
     }
 
     void pushContext(@Nullable ReadableMap font) {
-        mXPositionsContext.add(new ArrayList<String>());
-        mYPositionsContext.add(new ArrayList<String>());
         mRotationsContext.add(mRotations);
         mRotationContext.add(mRotation);
         mDeltaXsContext.add(mDeltaXs);
         mDeltaYsContext.add(mDeltaYs);
+        mXPositionsContext.add(mXs);
+        mYPositionsContext.add(mYs);
         mFontContext.add(font);
         mContextLength++;
         top++;
@@ -85,17 +88,11 @@ class GlyphContext {
 
     void pushContext(@Nullable ReadableMap font, @Nullable ReadableArray rotate, @Nullable ReadableArray deltaX, @Nullable ReadableArray deltaY, @Nullable String positionX, @Nullable String positionY) {
         if (positionX != null) {
-            ArrayList<String> list = new ArrayList<>(Arrays.asList(positionX.trim().split("\\s+")));
-            mXPositionsContext.add(list);
-        } else {
-            mXPositionsContext.add(new ArrayList<String>());
+            mXs = new ArrayList<>(Arrays.asList(positionX.trim().split("\\s+")));
         }
 
         if (positionY != null) {
-            ArrayList<String> list = new ArrayList<>(Arrays.asList(positionY.trim().split("\\s+")));
-            mYPositionsContext.add(list);
-        } else {
-            mYPositionsContext.add(new ArrayList<String>());
+            mYs = new ArrayList<>(Arrays.asList(positionY.trim().split("\\s+")));
         }
 
         ArrayList<Float> rotations = getFloatArrayListFromReadableArray(rotate);
@@ -118,6 +115,8 @@ class GlyphContext {
         mRotationContext.add(mRotation);
         mDeltaXsContext.add(mDeltaXs);
         mDeltaYsContext.add(mDeltaYs);
+        mXPositionsContext.add(mXs);
+        mYPositionsContext.add(mYs);
         mFontContext.add(font);
         mContextLength++;
         top++;
@@ -143,6 +142,8 @@ class GlyphContext {
             mRotation = mRotationContext.get(top);
             mDeltaXs = mDeltaXsContext.get(top);
             mDeltaYs = mDeltaYsContext.get(top);
+            mXs = mXPositionsContext.get(top);
+            mYs = mYPositionsContext.get(top);
         } else {
             mCurrentDelta.x = mCurrentDelta.y = mRotation = 0;
             mCurrentLocation.x = mCurrentLocation.y = 0;
@@ -150,25 +151,15 @@ class GlyphContext {
     }
 
     PointF getNextGlyphPoint(float glyphWidth) {
-        if (hasNext(mXPositionsContext)) {
-            String nextString = getNextString(mXPositionsContext);
-            mCurrentLocation.x = PropHelper.fromPercentageToFloat(nextString, mWidth, 0, mScale);
-            mCurrentDelta.x = 0;
-        }
-        if (hasNext(mYPositionsContext)) {
-            String nextString = getNextString(mYPositionsContext);
-            mCurrentLocation.y = PropHelper.fromPercentageToFloat(nextString, mHeight, 0, mScale);
-            mCurrentDelta.y = 0;
-        }
-
+        mCurrentLocation.x = getGlyphPosition(true);
+        mCurrentLocation.y = getGlyphPosition(false);
         mCurrentLocation.x += glyphWidth;
-
         return mCurrentLocation;
     }
 
     PointF getNextGlyphDelta() {
-        mCurrentDelta.x = getNextDelta(mDeltaXsContext, mCurrentDelta.x);
-        mCurrentDelta.y = getNextDelta(mDeltaYsContext, mCurrentDelta.y);
+        mCurrentDelta.x = getNextDelta(true);
+        mCurrentDelta.y = getNextDelta(false);
         return mCurrentDelta;
     }
 
@@ -194,29 +185,12 @@ class GlyphContext {
         return mRotation;
     }
 
-    private boolean hasNext(List<? extends Collection<?>> context) {
-        int index = top;
-
-        for (; index >= 0; index--) {
-            if (hasNext(context, index)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private boolean hasNext(List<? extends Collection<?>> context, int index) {
-        return context.get(index).size() != 0;
-    }
-
-    private float getNextDelta(List<? extends List<Float>> lists, float current) {
+    private float getNextDelta(boolean isX) {
+        ArrayList<ArrayList<Float>> lists = isX ? mDeltaXsContext : mDeltaYsContext;
+        float delta = isX ? mCurrentDelta.x : mCurrentDelta.y;
         List<Float> prev = null;
-        int index = top;
 
-        float delta = current;
-
-        for (; index >= 0; index--) {
+        for (int index = top; index >= 0; index--) {
             List<Float> deltas = lists.get(index);
 
             if (prev != deltas && deltas.size() != 0) {
@@ -233,22 +207,29 @@ class GlyphContext {
         return delta;
     }
 
-    private String getNextString(ArrayList<ArrayList<String>> lists) {
-        boolean valueSet = false;
-        String value = "";
-        int index = top;
+    private float getGlyphPosition(boolean isX) {
+        ArrayList<ArrayList<String>> lists = isX ? mXPositionsContext : mYPositionsContext;
+        float value = isX ? mCurrentLocation.x : mCurrentLocation.y;
+        List<String> prev = null;
 
-        for (; index >= 0; index--) {
+        for (int index = top; index >= 0; index--) {
             List<String> list = lists.get(index);
 
-            if (list.size() != 0) {
+            if (prev != list && list.size() != 0) {
                 String val = list.remove(0);
 
-                if (!valueSet) {
-                    valueSet = true;
-                    value = val;
+                if (top == index) {
+                    float relative = isX ? mWidth : mHeight;
+                    value = PropHelper.fromPercentageToFloat(val, relative, 0, mScale);
+                    if (isX) {
+                        mCurrentDelta.x = 0;
+                    } else {
+                        mCurrentDelta.y = 0;
+                    }
                 }
             }
+
+            prev = list;
         }
 
         return value;
@@ -268,7 +249,7 @@ class GlyphContext {
         String fontStyle = null;
 
         // TODO: add support for other length units
-        for (int index = mContextLength - 1; index >= 0; index--) {
+        for (int index = top; index >= 0; index--) {
             ReadableMap font = mFontContext.get(index);
 
             if (fontFamily == null && font.hasKey("fontFamily")) {
