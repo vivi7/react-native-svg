@@ -51,12 +51,9 @@ public class CircleShadowNode extends RenderableShadowNode {
 
         float r;
         if (PropHelper.isPercentage(mR)) {
-            r = PropHelper.fromPercentageToFloat(mR, 1, 0, 1);
-            float powX = (float)Math.pow((getCanvasWidth() * r), 2);
-            float powY = (float)Math.pow((getCanvasHeight() * r), 2);
-            r = (float)Math.sqrt(powX + powY) / (float)Math.sqrt(2);
+            r = relativeOnOther(mR);
         } else {
-            r =  Float.parseFloat(mR) * mScale;
+            r = Float.parseFloat(mR) * mScale;
         }
 
         path.addCircle(cx, cy, r, Path.Direction.CW);

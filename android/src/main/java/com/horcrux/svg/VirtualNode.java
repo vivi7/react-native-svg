@@ -26,7 +26,15 @@ import com.facebook.react.uimanager.annotations.ReactProp;
 
 import javax.annotation.Nullable;
 
+import static com.horcrux.svg.GlyphContext.DEFAULT_FONT_SIZE;
+
 public abstract class VirtualNode extends LayoutShadowNode {
+    /*
+        N[1/Sqrt[2], 36]
+        The inverse of the square root of 2.
+        Provide enough digits for the 128-bit IEEE quad (36 significant digits).
+    */
+    private static final double M_SQRT1_2l = 0.707106781186547524400844362104849039;
 
     protected static final float MIN_OPACITY_FOR_DRAW = 0.01f;
 
@@ -35,6 +43,8 @@ public abstract class VirtualNode extends LayoutShadowNode {
     protected float mOpacity = 1f;
     protected float mScaleX = 1f;
     protected float mScaleY = 1f;
+    protected double mFontSize = -1;
+    protected double mParentFontSize = -1;
     protected Matrix mMatrix = new Matrix();
 
     private int mClipRule;
@@ -49,6 +59,8 @@ public abstract class VirtualNode extends LayoutShadowNode {
 
     private SvgViewShadowNode mSvgShadowNode;
     private Path mCachedClipPath;
+    private GroupShadowNode mParentTextRoot;
+    private GroupShadowNode mTextRoot;
 
     public VirtualNode() {
         mScale = DisplayMetricsHolder.getScreenDisplayMetrics().density;
@@ -57,6 +69,94 @@ public abstract class VirtualNode extends LayoutShadowNode {
     @Override
     public boolean isVirtual() {
         return true;
+    }
+
+    GroupShadowNode getTextRoot() {
+        GroupShadowNode shadowNode = getShadowNode(GroupShadowNode.class);
+        if (shadowNode == null) {
+            return getShadowNode(TextShadowNode.class);
+        }
+        return shadowNode;
+    }
+
+    GroupShadowNode getParentTextRoot() {
+        GroupShadowNode shadowNode = getParentShadowNode(GroupShadowNode.class);
+        if (shadowNode == null) {
+            return getParentShadowNode(TextShadowNode.class);
+        }
+        return shadowNode;
+    }
+
+    @android.support.annotation.Nullable
+    private GroupShadowNode getParentShadowNode(Class shadowNodeClass) {
+        ReactShadowNode node = this.getParent();
+        if (mParentTextRoot == null) {
+            while (node != null) {
+                if (node.getClass() == shadowNodeClass) {
+                    mParentTextRoot = (GroupShadowNode)node;
+                    break;
+                }
+
+                ReactShadowNode parent = node.getParent();
+
+                if (!(parent instanceof VirtualNode)) {
+                    node = null;
+                } else {
+                    node = parent;
+                }
+            }
+        }
+
+        return mParentTextRoot;
+    }
+
+    @android.support.annotation.Nullable
+    private GroupShadowNode getShadowNode(Class shadowNodeClass) {
+        VirtualNode node = this;
+        if (mTextRoot == null) {
+            while (node != null) {
+                if (node.getClass() == shadowNodeClass) {
+                    mTextRoot = (GroupShadowNode)node;
+                    break;
+                }
+
+                ReactShadowNode parent = node.getParent();
+
+                if (!(parent instanceof VirtualNode)) {
+                    node = null;
+                } else {
+                    node = (VirtualNode)parent;
+                }
+            }
+        }
+
+        return mTextRoot;
+    }
+
+    double getFontSizeFromContext() {
+        if (mFontSize != -1) {
+            return mFontSize;
+        }
+        GroupShadowNode root = getTextRoot();
+        if (root == null) {
+            mFontSize = DEFAULT_FONT_SIZE;
+        } else {
+            mFontSize = root.getGlyphContext().getFontSize();
+        }
+        return mFontSize;
+    }
+
+    double getFontSizeFromParentContext() {
+        if (mParentFontSize != -1) {
+            return mParentFontSize;
+        }
+        GroupShadowNode root = getParentTextRoot();
+        if (root == null) {
+            mParentFontSize = DEFAULT_FONT_SIZE;
+        } else {
+            mParentFontSize = root.getGlyphContext().getFontSize();
+        }
+        return mParentFontSize;
     }
 
     public abstract void draw(Canvas canvas, Paint paint, float opacity);
@@ -229,11 +329,18 @@ public abstract class VirtualNode extends LayoutShadowNode {
     }
 
     protected float relativeOnWidth(String length) {
-        return PropHelper.fromPercentageToFloat(length, getCanvasWidth(), 0, mScale);
+        return PropHelper.fromRelativeToFloat(length, getCanvasWidth(), 0, mScale, getFontSizeFromContext());
     }
 
     protected float relativeOnHeight(String length) {
-        return PropHelper.fromPercentageToFloat(length, getCanvasHeight(), 0, mScale);
+        return PropHelper.fromRelativeToFloat(length, getCanvasHeight(), 0, mScale, getFontSizeFromContext());
+    }
+
+    protected float relativeOnOther(String length) {
+        double powX = Math.pow((getCanvasWidth()), 2);
+        double powY = Math.pow((getCanvasHeight()), 2);
+        float r = (float) (Math.sqrt(powX + powY) * M_SQRT1_2l);
+        return PropHelper.fromRelativeToFloat(length, r, 0, mScale, getFontSizeFromContext());
     }
 
     protected float getCanvasWidth() {

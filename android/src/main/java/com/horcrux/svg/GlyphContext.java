@@ -24,57 +24,39 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 class GlyphContext {
-
-    private ArrayList<ArrayList<String>> mXPositionsContext;
-    private ArrayList<ArrayList<String>> mYPositionsContext;
-    private ArrayList<ArrayList<Float>> mRotationsContext;
-    private ArrayList<ArrayList<Float>> mDeltaXsContext;
-    private ArrayList<ArrayList<Float>> mDeltaYsContext;
-    private ArrayList<ReadableMap> mFontContext;
-    private ArrayList<Float> mRotationContext;
-    private ArrayList<Float> mRotations;
-    private ArrayList<Float> mDeltaXs;
-    private ArrayList<Float> mDeltaYs;
-    private ArrayList<String> mXs;
-    private ArrayList<String> mYs;
-
-    private @Nonnull PointF mCurrentLocation;
-    private @Nonnull PointF mCurrentDelta;
-
-    private int top = -1;
-    private float mScale;
-    private float mWidth;
-    private float mHeight;
-    private float mRotation;
-    private int mContextLength;
-
+    static final float DEFAULT_FONT_SIZE = 12f;
     private static final float DEFAULT_KERNING = 0f;
-    private static final float DEFAULT_FONT_SIZE = 12f;
     private static final float DEFAULT_LETTER_SPACING = 0f;
 
+    private ArrayList<ArrayList<String>> mXPositionsContext = new ArrayList<>();
+    private ArrayList<ArrayList<String>> mYPositionsContext = new ArrayList<>();
+    private ArrayList<ArrayList<Float>> mRotationsContext = new ArrayList<>();
+    private ArrayList<ArrayList<Float>> mDeltaXsContext = new ArrayList<>();
+    private ArrayList<ArrayList<Float>> mDeltaYsContext = new ArrayList<>();
+    private ArrayList<ReadableMap> mFontContext = new ArrayList<>();
+    private ArrayList<Float> mRotationContext = new ArrayList<>();
+    private ArrayList<GroupShadowNode> mNodes = new ArrayList<>();
+    private ArrayList<Float> mRotations = new ArrayList<>();
+    private @Nonnull PointF mCurrentLocation = new PointF();
+    private ArrayList<Float> mDeltaXs = new ArrayList<>();
+    private ArrayList<Float> mDeltaYs = new ArrayList<>();
+    private @Nonnull PointF mCurrentDelta = new PointF();
+    private ArrayList<String> mXs = new ArrayList<>();
+    private ArrayList<String> mYs = new ArrayList<>();
+    private int mContextLength;
+    private float mRotation;
+    private float mHeight;
+    private float mWidth;
+    private float mScale;
+    private int top = -1;
+
     GlyphContext(float scale, float width, float height) {
-        mXPositionsContext = new ArrayList<>();
-        mYPositionsContext = new ArrayList<>();
-        mRotationsContext = new ArrayList<>();
-        mRotationContext = new ArrayList<>();
-        mDeltaXsContext = new ArrayList<>();
-        mDeltaYsContext = new ArrayList<>();
-        mFontContext = new ArrayList<>();
-        mRotations = new ArrayList<>();
-        mDeltaXs = new ArrayList<>();
-        mDeltaYs = new ArrayList<>();
-        mXs = new ArrayList<>();
-        mYs = new ArrayList<>();
-
-        mCurrentLocation = new PointF();
-        mCurrentDelta = new PointF();
-
         mHeight = height;
         mWidth = width;
         mScale = scale;
     }
 
-    void pushContext(@Nullable ReadableMap font) {
+    void pushContext(GroupShadowNode node, @Nullable ReadableMap font) {
         mRotationsContext.add(mRotations);
         mRotationContext.add(mRotation);
         mDeltaXsContext.add(mDeltaXs);
@@ -82,11 +64,12 @@ class GlyphContext {
         mXPositionsContext.add(mXs);
         mYPositionsContext.add(mYs);
         mFontContext.add(font);
+        mNodes.add(node);
         mContextLength++;
         top++;
     }
 
-    void pushContext(@Nullable ReadableMap font, @Nullable ReadableArray rotate, @Nullable ReadableArray deltaX, @Nullable ReadableArray deltaY, @Nullable String positionX, @Nullable String positionY) {
+    void pushContext(TextShadowNode node, @Nullable ReadableMap font, @Nullable ReadableArray rotate, @Nullable ReadableArray deltaX, @Nullable ReadableArray deltaY, @Nullable String positionX, @Nullable String positionY) {
         if (positionX != null) {
             mXs = new ArrayList<>(Arrays.asList(positionX.trim().split("\\s+")));
         }
@@ -118,6 +101,7 @@ class GlyphContext {
         mXPositionsContext.add(mXs);
         mYPositionsContext.add(mYs);
         mFontContext.add(font);
+        mNodes.add(node);
         mContextLength++;
         top++;
     }
@@ -136,6 +120,7 @@ class GlyphContext {
         mDeltaYsContext.remove(mContextLength);
 
         mFontContext.remove(mContextLength);
+        mNodes.remove(mContextLength);
 
         if (mContextLength != 0) {
             mRotations = mRotationsContext.get(top);
@@ -220,7 +205,7 @@ class GlyphContext {
 
                 if (top == index) {
                     float relative = isX ? mWidth : mHeight;
-                    value = PropHelper.fromPercentageToFloat(val, relative, 0, mScale);
+                    value = PropHelper.fromRelativeToFloat(val, relative, 0, mScale, getFontSize());
                     if (isX) {
                         mCurrentDelta.x = 0;
                     } else {
@@ -233,6 +218,22 @@ class GlyphContext {
         }
 
         return value;
+    }
+
+    double getFontSize() {
+        for (int index = top; index >= 0; index--) {
+            ReadableMap font = mFontContext.get(index);
+
+            if (mFontContext.get(index).hasKey("fontSize")) {
+                return font.getDouble("fontSize");
+            }
+        }
+
+        if (top > -1) {
+            return mNodes.get(0).getFontSizeFromParentContext();
+        }
+
+        return DEFAULT_FONT_SIZE;
     }
 
     ReadableMap getGlyphFont() {
@@ -298,7 +299,6 @@ class GlyphContext {
     }
 
     private ArrayList<Float> getFloatArrayListFromReadableArray(ReadableArray readableArray) {
-        float fontSize = (float) getGlyphFont().getDouble("fontSize");
         ArrayList<Float> arrayList = new ArrayList<>();
 
         if (readableArray != null) {
@@ -306,7 +306,7 @@ class GlyphContext {
                 switch (readableArray.getType(i)) {
                     case String:
                         String val = readableArray.getString(i);
-                        arrayList.add(Float.valueOf(val.substring(0, val.length() - 2)) * fontSize);
+                        arrayList.add((float) (Float.valueOf(val.substring(0, val.length() - 2)) * getFontSize()));
                         break;
 
                     case Number:
