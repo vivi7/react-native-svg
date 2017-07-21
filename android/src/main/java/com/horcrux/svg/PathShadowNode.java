@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2015-present, Horcrux.
  * All rights reserved.
  *
@@ -13,20 +13,18 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 
-import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.uimanager.annotations.ReactProp;
 
 /**
  * Shadow node for virtual Path view
  */
-public class PathShadowNode extends RenderableShadowNode {
+class PathShadowNode extends RenderableShadowNode {
 
     private Path mPath;
-    private PropHelper.PathParser mD;
 
     @ReactProp(name = "d")
     public void setD(String d) {
-        mD = new PropHelper.PathParser(d, mScale);
+        PropHelper.PathParser mD = new PropHelper.PathParser(d, mScale);
         mPath = mD.getPath();
         markUpdated();
     }
@@ -40,7 +38,4 @@ public class PathShadowNode extends RenderableShadowNode {
         return mPath;
     }
 
-    public ReadableArray getBezierCurves() {
-        return mD.getBezierCurves();
-    }
 }

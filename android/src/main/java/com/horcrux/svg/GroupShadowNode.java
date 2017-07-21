@@ -14,8 +14,6 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
-import android.graphics.PointF;
-import android.graphics.Rect;
 import android.graphics.RectF;
 
 import com.facebook.react.bridge.ReadableMap;
@@ -48,28 +46,16 @@ class GroupShadowNode extends RenderableShadowNode {
         return mGlyphContext;
     }
 
-    protected void pushGlyphContext() {
-        getTextRoot().getGlyphContext().pushContext(this, mFont);
+    GlyphContext getTextRootGlyphContext() {
+        return getTextRoot().getGlyphContext();
     }
 
-    protected void popGlyphContext() {
-        getTextRoot().getGlyphContext().popContext();
+    void pushGlyphContext() {
+        getTextRootGlyphContext().pushContext(this, mFont);
     }
 
-    ReadableMap getFontFromContext() {
-        return  getTextRoot().getGlyphContext().getGlyphFont();
-    }
-
-    PointF getGlyphPointFromContext(float glyphWidth) {
-        return  getTextRoot().getGlyphContext().getNextGlyphPoint(glyphWidth);
-    }
-
-    PointF getGlyphDeltaFromContext() {
-        return  getTextRoot().getGlyphContext().getNextGlyphDelta();
-    }
-
-    float getNextGlyphRotationFromContext() {
-        return  getTextRoot().getGlyphContext().getNextGlyphRotation();
+    void popGlyphContext() {
+        getTextRootGlyphContext().popContext();
     }
 
     public void draw(final Canvas canvas, final Paint paint, final float opacity) {
@@ -85,7 +71,7 @@ class GroupShadowNode extends RenderableShadowNode {
         final SvgViewShadowNode svg = getSvgShadowNode();
         final GroupShadowNode self = this;
         traverseChildren(new NodeRunnable() {
-            public boolean run(VirtualNode node) {
+            public void run(VirtualNode node) {
                 if (node instanceof RenderableShadowNode) {
                     ((RenderableShadowNode)node).mergeProperties(self);
                 }
@@ -103,7 +89,6 @@ class GroupShadowNode extends RenderableShadowNode {
                 if (node.isResponsible()) {
                     svg.enableTouchEvents();
                 }
-                return true;
             }
         });
         popGlyphContext();
@@ -118,9 +103,8 @@ class GroupShadowNode extends RenderableShadowNode {
         final Path path = new Path();
 
         traverseChildren(new NodeRunnable() {
-            public boolean run(VirtualNode node) {
+            public void run(VirtualNode node) {
                 path.addPath(node.getPath(canvas, paint));
-                return true;
             }
         });
 
@@ -163,15 +147,14 @@ class GroupShadowNode extends RenderableShadowNode {
         return -1;
     }
 
-    protected void saveDefinition() {
+    void saveDefinition() {
         if (mName != null) {
             getSvgShadowNode().defineTemplate(this, mName);
         }
 
         traverseChildren(new NodeRunnable() {
-            public boolean run(VirtualNode node) {
+            public void run(VirtualNode node) {
                 node.saveDefinition();
-                return true;
             }
         });
     }
@@ -179,11 +162,10 @@ class GroupShadowNode extends RenderableShadowNode {
     @Override
     public void resetProperties() {
         traverseChildren(new NodeRunnable() {
-            public boolean run(VirtualNode node) {
+            public void run(VirtualNode node) {
                 if (node instanceof RenderableShadowNode) {
                     ((RenderableShadowNode)node).resetProperties();
                 }
-                return true;
             }
         });
     }

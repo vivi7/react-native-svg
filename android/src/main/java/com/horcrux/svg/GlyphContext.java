@@ -17,8 +17,6 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -28,196 +26,302 @@ class GlyphContext {
     private static final float DEFAULT_KERNING = 0f;
     private static final float DEFAULT_LETTER_SPACING = 0f;
 
-    private ArrayList<ArrayList<String>> mXPositionsContext = new ArrayList<>();
-    private ArrayList<ArrayList<String>> mYPositionsContext = new ArrayList<>();
-    private ArrayList<ArrayList<Float>> mRotationsContext = new ArrayList<>();
-    private ArrayList<ArrayList<Float>> mDeltaXsContext = new ArrayList<>();
-    private ArrayList<ArrayList<Float>> mDeltaYsContext = new ArrayList<>();
-    private ArrayList<ReadableMap> mFontContext = new ArrayList<>();
-    private ArrayList<Float> mRotationContext = new ArrayList<>();
-    private ArrayList<GroupShadowNode> mNodes = new ArrayList<>();
-    private ArrayList<Float> mRotations = new ArrayList<>();
-    private @Nonnull PointF mCurrentLocation = new PointF();
-    private ArrayList<Float> mDeltaXs = new ArrayList<>();
-    private ArrayList<Float> mDeltaYs = new ArrayList<>();
-    private @Nonnull PointF mCurrentDelta = new PointF();
-    private ArrayList<String> mXs = new ArrayList<>();
-    private ArrayList<String> mYs = new ArrayList<>();
+    // Unique input attribute lists (only added if node sets a value)
+    private final ArrayList<String[]> mXPositionsContext = new ArrayList<>();
+    private final ArrayList<String[]> mYPositionsContext = new ArrayList<>();
+    private final ArrayList<float[]> mRotationsContext = new ArrayList<>();
+    private final ArrayList<float[]> mDeltaXsContext = new ArrayList<>();
+    private final ArrayList<float[]> mDeltaYsContext = new ArrayList<>();
+
+    // Unique index into attribute list (one per unique list)
+    private final ArrayList<Integer> mXPositionIndices = new ArrayList<>();
+    private final ArrayList<Integer> mYPositionIndices = new ArrayList<>();
+    private final ArrayList<Integer> mRotationIndices = new ArrayList<>();
+    private final ArrayList<Integer> mDeltaXIndices = new ArrayList<>();
+    private final ArrayList<Integer> mDeltaYIndices = new ArrayList<>();
+
+    // Index of unique context used (one per node push/pop)
+    private final ArrayList<Integer> mXPositionsIndices = new ArrayList<>();
+    private final ArrayList<Integer> mYPositionsIndices = new ArrayList<>();
+    private final ArrayList<Integer> mRotationsIndices = new ArrayList<>();
+    private final ArrayList<Integer> mDeltaXsIndices = new ArrayList<>();
+    private final ArrayList<Integer> mDeltaYsIndices = new ArrayList<>();
+
+    // Current stack (one per node push/pop)
+    private final ArrayList<ReadableMap> mFontContext = new ArrayList<>();
+    private final ArrayList<GroupShadowNode> mNodes = new ArrayList<>();
+
+    // Current accumulated values
+    private @Nonnull final PointF mCurrentPosition = new PointF();
+    private @Nonnull final PointF mCurrentDelta = new PointF();
+    private double fontSize = DEFAULT_FONT_SIZE;
+
+    // Current attribute list
+    private float[] mRotations = new float[]{0};
+    private float[] mDeltaXs = new float[]{};
+    private float[] mDeltaYs = new float[]{};
+    private String[] mXs = new String[]{};
+    private String[] mYs = new String[]{};
+
+    // Current attribute list index
+    private int mXPositionsIndex;
+    private int mYPositionsIndex;
+    private int mRotationsIndex;
+    private int mDeltaXsIndex;
+    private int mDeltaYsIndex;
+
+    // Current value index in current attribute list
+    private int mXPositionIndex = -1;
+    private int mYPositionIndex = -1;
+    private int mRotationIndex = -1;
+    private int mDeltaXIndex = -1;
+    private int mDeltaYIndex = -1;
+
     private int mContextLength;
-    private float mRotation;
-    private float mHeight;
-    private float mWidth;
-    private float mScale;
     private int top = -1;
 
+    // Constructor parameters
+    private final float mScale;
+    private final float mWidth;
+    private final float mHeight;
+
     GlyphContext(float scale, float width, float height) {
-        mHeight = height;
-        mWidth = width;
         mScale = scale;
+        mWidth = width;
+        mHeight = height;
+
+        mXPositionsContext.add(mXs);
+        mYPositionsContext.add(mYs);
+        mDeltaXsContext.add(mDeltaXs);
+        mDeltaYsContext.add(mDeltaYs);
+        mRotationsContext.add(mRotations);
+
+        mXPositionIndices.add(mXPositionIndex);
+        mYPositionIndices.add(mYPositionIndex);
+        mRotationIndices.add(mRotationIndex);
+        mDeltaXIndices.add(mDeltaXIndex);
+        mDeltaYIndices.add(mDeltaYIndex);
+
+        pushIndices();
     }
 
     void pushContext(GroupShadowNode node, @Nullable ReadableMap font) {
-        mRotationsContext.add(mRotations);
-        mRotationContext.add(mRotation);
-        mDeltaXsContext.add(mDeltaXs);
-        mDeltaYsContext.add(mDeltaYs);
-        mXPositionsContext.add(mXs);
-        mYPositionsContext.add(mYs);
         mFontContext.add(font);
         mNodes.add(node);
         mContextLength++;
+        pushIndices();
         top++;
+
+        fontSize = getFontSize();
     }
 
-    void pushContext(TextShadowNode node, @Nullable ReadableMap font, @Nullable ReadableArray rotate, @Nullable ReadableArray deltaX, @Nullable ReadableArray deltaY, @Nullable String positionX, @Nullable String positionY) {
+    void pushContext(TextShadowNode node, @Nullable ReadableMap font, @Nullable ReadableArray rotate, @Nullable ReadableArray deltaX, @Nullable ReadableArray deltaY, @Nullable String positionX, @Nullable String positionY, boolean resetPosition) {
+        if (resetPosition) {
+            reset();
+        }
+
         if (positionX != null) {
-            mXs = new ArrayList<>(Arrays.asList(positionX.trim().split("\\s+")));
+            mXPositionsIndex++;
+            mXPositionIndex = -1;
+            mXs = positionX.trim().split("\\s+");
+            mXPositionIndices.add(mXPositionIndex);
+            mXPositionsContext.add(mXs);
         }
 
         if (positionY != null) {
-            mYs = new ArrayList<>(Arrays.asList(positionY.trim().split("\\s+")));
+            mYPositionsIndex++;
+            mYPositionIndex = -1;
+            mYs = positionY.trim().split("\\s+");
+            mYPositionIndices.add(mYPositionIndex);
+            mYPositionsContext.add(mYs);
         }
 
-        ArrayList<Float> rotations = getFloatArrayListFromReadableArray(rotate);
-        if (rotations.size() != 0) {
-            mRotation = rotations.get(0);
-            mRotations = rotations;
+        if (rotate != null && rotate.size() != 0) {
+            mRotationsIndex++;
+            mRotationIndex = -1;
+            mRotationIndices.add(mRotationIndex);
+            mRotations = getFloatArrayFromReadableArray(rotate);
+            mRotationsContext.add(mRotations);
         }
 
-        ArrayList<Float> deltaXs = getFloatArrayListFromReadableArray(deltaX);
-        if (deltaXs.size() != 0) {
-            mDeltaXs = deltaXs;
+        if (deltaX != null && deltaX.size() != 0) {
+            mDeltaXsIndex++;
+            mDeltaXIndex = -1;
+            mDeltaXIndices.add(mDeltaXIndex);
+            mDeltaXs = getFloatArrayFromReadableArray(deltaX);
+            mDeltaXsContext.add(mDeltaXs);
         }
 
-        ArrayList<Float> deltaYs = getFloatArrayListFromReadableArray(deltaY);
-        if (deltaYs.size() != 0) {
-            mDeltaYs = deltaYs;
+        if (deltaY != null && deltaY.size() != 0) {
+            mDeltaYsIndex++;
+            mDeltaYIndex = -1;
+            mDeltaYIndices.add(mDeltaYIndex);
+            mDeltaYs = getFloatArrayFromReadableArray(deltaY);
+            mDeltaYsContext.add(mDeltaYs);
         }
 
-        mRotationsContext.add(mRotations);
-        mRotationContext.add(mRotation);
-        mDeltaXsContext.add(mDeltaXs);
-        mDeltaYsContext.add(mDeltaYs);
-        mXPositionsContext.add(mXs);
-        mYPositionsContext.add(mYs);
         mFontContext.add(font);
         mNodes.add(node);
         mContextLength++;
+        pushIndices();
         top++;
+
+        fontSize = getFontSize();
+    }
+
+    private void pushIndices() {
+        mXPositionsIndices.add(mXPositionsIndex);
+        mYPositionsIndices.add(mYPositionsIndex);
+        mRotationsIndices.add(mRotationsIndex);
+        mDeltaXsIndices.add(mDeltaXsIndex);
+        mDeltaYsIndices.add(mDeltaYsIndex);
+    }
+
+    private void reset() {
+        mXPositionsIndex = mYPositionsIndex = mRotationsIndex = mDeltaXsIndex = mDeltaYsIndex = 0;
+        mXPositionIndex = mYPositionIndex = mRotationIndex = mDeltaXIndex = mDeltaYIndex = -1;
+        mCurrentPosition.x = mCurrentPosition.y = mCurrentDelta.x = mCurrentDelta.y = 0;
     }
 
     void popContext() {
         mContextLength--;
         top--;
 
-        mXPositionsContext.remove(mContextLength);
-        mYPositionsContext.remove(mContextLength);
-
-        mRotationsContext.remove(mContextLength);
-        mRotationContext.remove(mContextLength);
-
-        mDeltaXsContext.remove(mContextLength);
-        mDeltaYsContext.remove(mContextLength);
-
         mFontContext.remove(mContextLength);
         mNodes.remove(mContextLength);
 
-        if (mContextLength != 0) {
-            mRotations = mRotationsContext.get(top);
-            mRotation = mRotationContext.get(top);
-            mDeltaXs = mDeltaXsContext.get(top);
-            mDeltaYs = mDeltaYsContext.get(top);
-            mXs = mXPositionsContext.get(top);
-            mYs = mYPositionsContext.get(top);
-        } else {
-            mCurrentDelta.x = mCurrentDelta.y = mRotation = 0;
-            mCurrentLocation.x = mCurrentLocation.y = 0;
+        mXPositionsIndices.remove(mContextLength);
+        mYPositionsIndices.remove(mContextLength);
+        mRotationsIndices.remove(mContextLength);
+        mDeltaXsIndices.remove(mContextLength);
+        mDeltaYsIndices.remove(mContextLength);
+
+        int x = mXPositionsIndex;
+        int y = mYPositionsIndex;
+        int r = mRotationsIndex;
+        int dx = mDeltaXsIndex;
+        int dy = mDeltaYsIndex;
+
+        if (mContextLength == 0) {
+            reset();
+        }
+
+        mXPositionsIndex = mXPositionsIndices.get(mContextLength);
+        mYPositionsIndex = mYPositionsIndices.get(mContextLength);
+        mRotationsIndex = mRotationsIndices.get(mContextLength);
+        mDeltaXsIndex = mDeltaXsIndices.get(mContextLength);
+        mDeltaYsIndex = mDeltaYsIndices.get(mContextLength);
+
+        if (x != mXPositionsIndex) {
+            mXPositionsContext.remove(x);
+            mXs = mXPositionsContext.get(mXPositionsIndex);
+            mXPositionIndex = mXPositionIndices.get(mXPositionsIndex);
+        }
+        if (y != mYPositionsIndex) {
+            mYPositionsContext.remove(y);
+            mYs = mYPositionsContext.get(mYPositionsIndex);
+            mYPositionIndex = mYPositionIndices.get(mYPositionsIndex);
+        }
+        if (r != mRotationsIndex) {
+            mRotationsContext.remove(r);
+            mRotations = mRotationsContext.get(mRotationsIndex);
+            mRotationIndex = mRotationIndices.get(mRotationsIndex);
+        }
+        if (dx != mDeltaXsIndex) {
+            mDeltaXsContext.remove(dx);
+            mDeltaXs = mDeltaXsContext.get(mDeltaXsIndex);
+            mDeltaXIndex = mDeltaXIndices.get(mDeltaXsIndex);
+        }
+        if (dy != mDeltaYsIndex) {
+            mDeltaYsContext.remove(dy);
+            mDeltaYs = mDeltaYsContext.get(mDeltaYsIndex);
+            mDeltaYIndex = mDeltaYIndices.get(mDeltaYsIndex);
         }
     }
 
     PointF getNextGlyphPoint(float glyphWidth) {
-        mCurrentLocation.x = getGlyphPosition(true);
-        mCurrentLocation.y = getGlyphPosition(false);
-        mCurrentLocation.x += glyphWidth;
-        return mCurrentLocation;
+        setGlyphPositionX();
+        setGlyphPositionY();
+        mCurrentPosition.x += glyphWidth;
+        return mCurrentPosition;
     }
 
     PointF getNextGlyphDelta() {
-        mCurrentDelta.x = getNextDelta(true);
-        mCurrentDelta.y = getNextDelta(false);
+        setNextDeltaX();
+        setNextDeltaY();
         return mCurrentDelta;
     }
 
     float getNextGlyphRotation() {
-        List<Float> prev = null;
-        int index = top;
-
-        for (; index >= 0; index--) {
-            List<Float> rotations = mRotationsContext.get(index);
-
-            if (prev != rotations && rotations.size() != 0) {
-                float val = rotations.remove(0);
-                mRotationContext.set(index, val);
-
-                if (index == top) {
-                    mRotation = val;
-                }
-            }
-
-            prev = rotations;
-        }
-
-        return mRotation;
+        setNextGlyphRotation();
+        return mRotations[mRotationIndex];
     }
 
-    private float getNextDelta(boolean isX) {
-        ArrayList<ArrayList<Float>> lists = isX ? mDeltaXsContext : mDeltaYsContext;
-        float delta = isX ? mCurrentDelta.x : mCurrentDelta.y;
-        List<Float> prev = null;
-
-        for (int index = top; index >= 0; index--) {
-            List<Float> deltas = lists.get(index);
-
-            if (prev != deltas && deltas.size() != 0) {
-                float val = deltas.remove(0);
-
-                if (top == index) {
-                    delta += val * mScale;
-                }
-            }
-
-            prev = deltas;
+    private void setNextGlyphRotation() {
+        for (int index = mRotationsIndex; index >= 0; index--) {
+            int rotationIndex = mRotationIndices.get(index);
+            mRotationIndices.set(index, rotationIndex + 1);
         }
 
-        return delta;
+        mRotationIndex = Math.min(mRotationIndex + 1, mRotations.length - 1);
     }
 
-    private float getGlyphPosition(boolean isX) {
-        ArrayList<ArrayList<String>> lists = isX ? mXPositionsContext : mYPositionsContext;
-        float value = isX ? mCurrentLocation.x : mCurrentLocation.y;
-        List<String> prev = null;
-
-        for (int index = top; index >= 0; index--) {
-            List<String> list = lists.get(index);
-
-            if (prev != list && list.size() != 0) {
-                String val = list.remove(0);
-
-                if (top == index) {
-                    float relative = isX ? mWidth : mHeight;
-                    value = PropHelper.fromRelativeToFloat(val, relative, 0, mScale, getFontSize());
-                    if (isX) {
-                        mCurrentDelta.x = 0;
-                    } else {
-                        mCurrentDelta.y = 0;
-                    }
-                }
-            }
-
-            prev = list;
+    private void setNextDeltaX() {
+        for (int index = mDeltaXsIndex; index >= 0; index--) {
+            int deltaIndex = mDeltaXIndices.get(index);
+            mDeltaXIndices.set(index, deltaIndex + 1);
         }
 
-        return value;
+        int nextIndex = mDeltaXIndex + 1;
+        if (nextIndex < mDeltaXs.length) {
+            mDeltaXIndex = nextIndex;
+            float val = mDeltaXs[nextIndex];
+            mCurrentDelta.x += val * mScale;
+        }
+    }
+
+    private void setNextDeltaY() {
+        for (int index = mDeltaYsIndex; index >= 0; index--) {
+            int deltaIndex = mDeltaYIndices.get(index);
+            mDeltaYIndices.set(index, deltaIndex + 1);
+        }
+
+        int nextIndex = mDeltaYIndex + 1;
+        if (nextIndex < mDeltaYs.length) {
+            mDeltaYIndex = nextIndex;
+            float val = mDeltaYs[nextIndex];
+            mCurrentDelta.y += val * mScale;
+        }
+    }
+
+    private void setGlyphPositionX() {
+        for (int index = mXPositionsIndex; index >= 0; index--) {
+            int positionIndex = mXPositionIndices.get(index);
+            mXPositionIndices.set(index, positionIndex + 1);
+        }
+
+        int nextIndex = mXPositionIndex + 1;
+        if (nextIndex < mXs.length) {
+            mCurrentDelta.x = 0;
+            mXPositionIndex = nextIndex;
+            String val = mXs[nextIndex];
+            mCurrentPosition.x = PropHelper.fromRelativeToFloat(val, mWidth, 0, mScale, fontSize);
+        }
+    }
+
+    private void setGlyphPositionY() {
+        for (int index = mYPositionsIndex; index >= 0; index--) {
+            int positionIndex = mYPositionIndices.get(index);
+            mYPositionIndices.set(index, positionIndex + 1);
+        }
+
+        int nextIndex = mYPositionIndex + 1;
+        if (nextIndex < mYs.length) {
+            mCurrentDelta.y = 0;
+            mYPositionIndex = nextIndex;
+            String val = mYs[nextIndex];
+            mCurrentPosition.y = PropHelper.fromRelativeToFloat(val, mHeight, 0, mScale, fontSize);
+        }
     }
 
     float getWidth() {
@@ -246,7 +350,6 @@ class GlyphContext {
 
     ReadableMap getGlyphFont() {
         float letterSpacing = DEFAULT_LETTER_SPACING;
-        float fontSize = (float) getFontSize();
         float kerning = DEFAULT_KERNING;
 
         boolean letterSpacingSet = false;
@@ -256,7 +359,6 @@ class GlyphContext {
         String fontWeight = null;
         String fontStyle = null;
 
-        // TODO: add support for other length units
         for (int index = top; index >= 0; index--) {
             ReadableMap font = mFontContext.get(index);
 
@@ -300,24 +402,21 @@ class GlyphContext {
         return map;
     }
 
-    private ArrayList<Float> getFloatArrayListFromReadableArray(ReadableArray readableArray) {
-        ArrayList<Float> arrayList = new ArrayList<>();
+    private float[] getFloatArrayFromReadableArray(ReadableArray readableArray) {
+        int size = readableArray.size();
+        float[] floats = new float[size];
+        for (int i = 0; i < size; i++) {
+            switch (readableArray.getType(i)) {
+                case String:
+                    String val = readableArray.getString(i);
+                    floats[i] = (float) (Float.valueOf(val.substring(0, val.length() - 2)) * fontSize);
+                    break;
 
-        if (readableArray != null) {
-            for (int i = 0; i < readableArray.size(); i++) {
-                switch (readableArray.getType(i)) {
-                    case String:
-                        String val = readableArray.getString(i);
-                        arrayList.add((float) (Float.valueOf(val.substring(0, val.length() - 2)) * getFontSize()));
-                        break;
-
-                    case Number:
-                        arrayList.add((float) readableArray.getDouble(i));
-                        break;
-                }
+                case Number:
+                    floats[i] = (float) readableArray.getDouble(i);
+                    break;
             }
         }
-
-        return arrayList;
+        return floats;
     }
 }

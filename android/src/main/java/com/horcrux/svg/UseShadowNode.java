@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2015-present, Horcrux.
  * All rights reserved.
  *
@@ -20,7 +20,7 @@ import com.facebook.react.uimanager.annotations.ReactProp;
 /**
  * Shadow node for virtual Use view
  */
-public class UseShadowNode extends RenderableShadowNode {
+class UseShadowNode extends RenderableShadowNode {
 
     private String mHref;
     private String mWidth;
@@ -42,14 +42,6 @@ public class UseShadowNode extends RenderableShadowNode {
     public void setHeight(String height) {
         mHeight = height;
         markUpdated();
-    }
-
-    public String getWidth() {
-        return mWidth;
-    }
-
-    public String getHeight() {
-        return mHeight;
     }
 
     @Override
