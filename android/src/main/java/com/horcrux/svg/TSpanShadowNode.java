@@ -16,7 +16,6 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
-import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 
@@ -34,9 +33,15 @@ import static android.graphics.PathMeasure.TANGENT_MATRIX_FLAG;
  */
 class TSpanShadowNode extends TextShadowNode {
 
-    private Path mCache;
-    private @Nullable String mContent;
-    private TextPathShadowNode textPath;
+    private static final String STRETCH = "stretch";
+    private static final String ITALIC = "italic";
+    private static final String FONTS = "fonts/";
+    private static final String BOLD = "bold";
+    private static final String OTF = ".otf";
+    private static final String TTF = ".ttf";
+
+    private static final float DEFAULT_KERNING = 0f;
+    private static final float DEFAULT_LETTER_SPACING = 0f;
 
     private static final String PROP_KERNING = "kerning";
     private static final String PROP_FONT_SIZE = "fontSize";
@@ -45,6 +50,10 @@ class TSpanShadowNode extends TextShadowNode {
     private static final String PROP_FONT_FAMILY = "fontFamily";
     private static final String PROP_LETTER_SPACING = "letterSpacing";
     private static final String PROP_IS_KERNING_VALUE_SET = "isKerningValueSet";
+
+    private Path mCache;
+    private @Nullable String mContent;
+    private TextPathShadowNode textPath;
 
     @ReactProp(name = "content")
     public void setContent(@Nullable String content) {
@@ -80,12 +89,12 @@ class TSpanShadowNode extends TextShadowNode {
         setupTextPath();
 
         pushGlyphContext();
-        Path path = mCache = getLinePath(mContent, paint);
+        mCache = getLinePath(mContent, paint);
         popGlyphContext();
 
-        path.computeBounds(new RectF(), true);
+        mCache.computeBounds(new RectF(), true);
 
-        return path;
+        return mCache;
     }
 
     private float getTextAnchorShift(float width) {
@@ -112,11 +121,11 @@ class TSpanShadowNode extends TextShadowNode {
         }
 
         GlyphContext gc = getTextRootGlyphContext();
-        ReadableMap font = gc.getGlyphFont();
+        ReadableMap font = gc.getFont();
         applyTextPropertiesToPaint(paint, font);
 
-        float distance = 0;
         float offset = 0;
+        float distance = 0;
         float renderMethodScaling = 1;
         float textMeasure = paint.measureText(line);
 
@@ -124,28 +133,38 @@ class TSpanShadowNode extends TextShadowNode {
         if (textPath != null) {
             pm = new PathMeasure(textPath.getPath(), false);
             distance = pm.getLength();
-            offset = PropHelper.fromRelativeToFloat(textPath.getStartOffset(), distance, 0, mScale, getFontSizeFromContext());
+            double size = getFontSizeFromContext();
+            String startOffset = textPath.getStartOffset();
+            offset = PropHelper.fromRelativeToFloat(startOffset, distance, 0, mScale, size);
             // String spacing = textPath.getSpacing(); // spacing = "auto | exact"
             String method = textPath.getMethod(); // method = "align | stretch"
-            if ("stretch".equals(method)) {
+            if (STRETCH.equals(method)) {
                 renderMethodScaling = distance / textMeasure;
             }
         }
 
         offset += getTextAnchorShift(textMeasure);
 
+        float x;
+        float y;
+        float r;
+        float dx;
+        float dy;
+
         Path glyph;
         float width;
-        PointF point;
-        PointF delta;
         Matrix matrix;
         String current;
-        float rotation;
         String previous = "";
         float previousWidth = 0;
         char[] chars = line.toCharArray();
-        float kerning = (float) (font.getDouble(PROP_KERNING) * mScale);
-        boolean autoKerning = !font.getBoolean(PROP_IS_KERNING_VALUE_SET);
+
+        boolean autoKerning = true;
+        float kerning = DEFAULT_KERNING;
+        if (font.getBoolean(PROP_IS_KERNING_VALUE_SET)) {
+            autoKerning = false;
+            kerning = (float) (font.getDouble(PROP_KERNING) * mScale);
+        }
 
         for (int index = 0; index < length; index++) {
             glyph = new Path();
@@ -160,16 +179,18 @@ class TSpanShadowNode extends TextShadowNode {
                 previous = current;
             }
 
-            point = gc.getNextGlyphPoint(width + kerning);
-            rotation = gc.getNextGlyphRotation();
-            delta = gc.getNextGlyphDelta();
+            x = gc.nextX(width + kerning);
+            y = gc.nextY();
+            r = gc.nextRotation();
+            dx = gc.nextDeltaX();
+            dy = gc.nextDeltaY();
             matrix = new Matrix();
 
-            float x = offset + point.x + delta.x - width;
+            float start = offset + x + dx - width;
 
             if (textPath != null) {
                 float halfway = width / 2;
-                float midpoint = x + halfway;
+                float midpoint = start + halfway;
 
                 if (midpoint > distance) {
                     break;
@@ -180,15 +201,14 @@ class TSpanShadowNode extends TextShadowNode {
                 assert pm != null;
                 pm.getMatrix(midpoint, matrix, POSITION_MATRIX_FLAG | TANGENT_MATRIX_FLAG);
 
-                matrix.preTranslate(-halfway, delta.y);
+                matrix.preTranslate(-halfway, dy);
                 matrix.preScale(renderMethodScaling, 1);
-                matrix.postTranslate(0, point.y);
+                matrix.postTranslate(0, y);
             } else {
-                float y = point.y + delta.y;
-                matrix.setTranslate(x, y);
+                matrix.setTranslate(start, y + dy);
             }
 
-            matrix.preRotate(rotation);
+            matrix.preRotate(r);
             glyph.transform(matrix);
             path.addPath(glyph);
         }
@@ -200,11 +220,13 @@ class TSpanShadowNode extends TextShadowNode {
         paint.setTextAlign(Paint.Align.LEFT);
 
         float fontSize = (float) font.getDouble(PROP_FONT_SIZE) * mScale;
-        float letterSpacing = (float) font.getDouble(PROP_LETTER_SPACING) * mScale;
+        float letterSpacing = font.hasKey(PROP_LETTER_SPACING) ?
+            (float) font.getDouble(PROP_LETTER_SPACING) * mScale
+            : DEFAULT_LETTER_SPACING;
 
         paint.setTextSize(fontSize);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            paint.setLetterSpacing(letterSpacing / fontSize);  // setLetterSpacing is only available from LOLLIPOP and on
+            paint.setLetterSpacing(letterSpacing / fontSize);
         }
 
         int decoration = getTextDecoration();
@@ -212,8 +234,10 @@ class TSpanShadowNode extends TextShadowNode {
         paint.setUnderlineText(decoration == TEXT_DECORATION_UNDERLINE);
         paint.setStrikeThruText(decoration == TEXT_DECORATION_LINE_THROUGH);
 
-        boolean isBold = font.hasKey(PROP_FONT_WEIGHT) && "bold".equals(font.getString(PROP_FONT_WEIGHT));
-        boolean isItalic = font.hasKey(PROP_FONT_STYLE) && "italic".equals(font.getString(PROP_FONT_STYLE));
+        boolean isBold = font.hasKey(PROP_FONT_WEIGHT) &&
+            BOLD.equals(font.getString(PROP_FONT_WEIGHT));
+        boolean isItalic = font.hasKey(PROP_FONT_STYLE) &&
+            ITALIC.equals(font.getString(PROP_FONT_STYLE));
 
         int fontStyle;
         if (isBold && isItalic) {
@@ -230,10 +254,12 @@ class TSpanShadowNode extends TextShadowNode {
 
         Typeface tf = null;
         try {
-            tf = Typeface.createFromAsset(a, "fonts/" + font.getString(PROP_FONT_FAMILY) + ".otf");
+            String path = FONTS + font.getString(PROP_FONT_FAMILY) + OTF;
+            tf = Typeface.createFromAsset(a, path);
         } catch (Exception ignored) {
             try {
-                tf = Typeface.createFromAsset(a, "fonts/" + font.getString(PROP_FONT_FAMILY) + ".ttf");
+                String path = FONTS + font.getString(PROP_FONT_FAMILY) + TTF;
+                tf = Typeface.createFromAsset(a, path);
             } catch (Exception ignored2) {
                 try {
                     tf = Typeface.create(font.getString(PROP_FONT_FAMILY), fontStyle);

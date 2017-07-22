@@ -178,6 +178,6 @@ class TextShadowNode extends GroupShadowNode {
     @Override
     void pushGlyphContext() {
         boolean isTextNode = !(this instanceof TextPathShadowNode) && !(this instanceof TSpanShadowNode);
-        getTextRoot().getGlyphContext().pushContext(this, mFont, mRotate, mDeltaX, mDeltaY, mPositionX, mPositionY, isTextNode);
+        getTextRootGlyphContext().pushContext(isTextNode, this, mFont, mPositionX, mPositionY, mRotate, mDeltaX, mDeltaY);
     }
 }
