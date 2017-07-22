@@ -33,9 +33,12 @@ class RadialGradientShadowNode extends DefinitionShadowNode {
     private ReadableArray mGradient;
     private Brush.BrushUnits mGradientUnits;
 
-    private static final float[] sMatrixData = new float[9];
-    private static final float[] sRawMatrix = new float[9];
-    private Matrix mMatrix = new Matrix();
+    private static final float[] sRawMatrix = new float[]{
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1
+    };
+    private Matrix mMatrix = null;
 
     @ReactProp(name = "fx")
     public void setFx(String fx) {
@@ -95,17 +98,11 @@ class RadialGradientShadowNode extends DefinitionShadowNode {
     @ReactProp(name = "gradientTransform")
     public void setGradientTransform(@Nullable ReadableArray matrixArray) {
         if (matrixArray != null) {
-            int matrixSize = PropHelper.toMatrixData(matrixArray, sMatrixData);
+            int matrixSize = PropHelper.toMatrixData(matrixArray, sRawMatrix, mScale);
             if (matrixSize == 6) {
-                sRawMatrix[0] = sMatrixData[0];
-                sRawMatrix[1] = sMatrixData[2];
-                sRawMatrix[2] = sMatrixData[4] * mScale;
-                sRawMatrix[3] = sMatrixData[1];
-                sRawMatrix[4] = sMatrixData[3];
-                sRawMatrix[5] = sMatrixData[5] * mScale;
-                sRawMatrix[6] = 0;
-                sRawMatrix[7] = 0;
-                sRawMatrix[8] = 1;
+                if (mMatrix == null) {
+                    mMatrix = new Matrix();
+                }
                 mMatrix.setValues(sRawMatrix);
             } else if (matrixSize != -1) {
                 FLog.w(ReactConstants.TAG, "RNSVG: Transform matrices must be of size 6");

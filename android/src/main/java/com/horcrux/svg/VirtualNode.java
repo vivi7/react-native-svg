@@ -38,11 +38,14 @@ abstract class VirtualNode extends LayoutShadowNode {
 
     static final float MIN_OPACITY_FOR_DRAW = 0.01f;
 
-    private static final float[] sMatrixData = new float[9];
-    private static final float[] sRawMatrix = new float[9];
+    private static final float[] sRawMatrix = new float[]{
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1
+    };
     float mOpacity = 1f;
-    private double mFontSize = -1;
-    private double mParentFontSize = -1;
+    private float mFontSize = -1;
+    private float mParentFontSize = -1;
     Matrix mMatrix = new Matrix();
 
     private int mClipRule;
@@ -72,23 +75,23 @@ abstract class VirtualNode extends LayoutShadowNode {
     }
 
     GroupShadowNode getTextRoot() {
-        GroupShadowNode shadowNode = getShadowNode(GroupShadowNode.class);
+        GroupShadowNode shadowNode = getTextRoot(GroupShadowNode.class);
         if (shadowNode == null) {
-            return getShadowNode(TextShadowNode.class);
+            return getTextRoot(TextShadowNode.class);
         }
         return shadowNode;
     }
 
-    private GroupShadowNode getParentTextRoot() {
-        GroupShadowNode shadowNode = getParentShadowNode(GroupShadowNode.class);
+    GroupShadowNode getParentTextRoot() {
+        GroupShadowNode shadowNode = getParentTextRoot(GroupShadowNode.class);
         if (shadowNode == null) {
-            return getParentShadowNode(TextShadowNode.class);
+            return getParentTextRoot(TextShadowNode.class);
         }
         return shadowNode;
     }
 
     @android.support.annotation.Nullable
-    private GroupShadowNode getParentShadowNode(Class shadowNodeClass) {
+    private GroupShadowNode getParentTextRoot(Class shadowNodeClass) {
         ReactShadowNode node = this.getParent();
         if (mParentTextRoot == null) {
             while (node != null) {
@@ -111,7 +114,7 @@ abstract class VirtualNode extends LayoutShadowNode {
     }
 
     @android.support.annotation.Nullable
-    private GroupShadowNode getShadowNode(Class shadowNodeClass) {
+    private GroupShadowNode getTextRoot(Class shadowNodeClass) {
         VirtualNode node = this;
         if (mTextRoot == null) {
             while (node != null) {
@@ -133,7 +136,7 @@ abstract class VirtualNode extends LayoutShadowNode {
         return mTextRoot;
     }
 
-    double getFontSizeFromContext() {
+    float getFontSizeFromContext() {
         if (mFontSize != -1) {
             return mFontSize;
         }
@@ -146,7 +149,7 @@ abstract class VirtualNode extends LayoutShadowNode {
         return mFontSize;
     }
 
-    double getFontSizeFromParentContext() {
+    float getFontSizeFromParentContext() {
         if (mParentFontSize != -1) {
             return mParentFontSize;
         }
@@ -214,17 +217,11 @@ abstract class VirtualNode extends LayoutShadowNode {
     @ReactProp(name = "matrix")
     public void setMatrix(@Nullable ReadableArray matrixArray) {
         if (matrixArray != null) {
-            int matrixSize = PropHelper.toMatrixData(matrixArray, sMatrixData);
+            int matrixSize = PropHelper.toMatrixData(matrixArray, sRawMatrix, mScale);
             if (matrixSize == 6) {
-                sRawMatrix[0] = sMatrixData[0];
-                sRawMatrix[1] = sMatrixData[2];
-                sRawMatrix[2] = sMatrixData[4] * mScale;
-                sRawMatrix[3] = sMatrixData[1];
-                sRawMatrix[4] = sMatrixData[3];
-                sRawMatrix[5] = sMatrixData[5] * mScale;
-                sRawMatrix[6] = 0;
-                sRawMatrix[7] = 0;
-                sRawMatrix[8] = 1;
+                if (mMatrix == null) {
+                    mMatrix = new Matrix();
+                }
                 mMatrix.setValues(sRawMatrix);
             } else if (matrixSize != -1) {
                 FLog.w(ReactConstants.TAG, "RNSVG: Transform matrices must be of size 6");
