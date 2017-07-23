@@ -82,37 +82,58 @@ class PropHelper {
     static private final Pattern percentageRegExp = Pattern.compile("^(-?\\d+(?:\\.\\d+)?)%$");
 
     /**
-     * Converts length string into actual based on a relative number
-     *
+     * Converts length string into px / user units
+     * in the current user coordinate system
      *
      * @param length     length string
-     * @param relative   relative number
-     * @param offset     offset number
-     * @param fontSize   current font size
-     * @return actual float based on relative number
+     * @param relative   relative size for percentages
+     * @param offset     offset for all units
+     * @param scale      scaling parameter
+     * @param fontSize   current font size  @return value in the current user coordinate system
      */
+    static double fromRelative(String length, double relative, double offset, double scale, double fontSize) {
+        /*
+            TODO list
 
-    static float fromRelativeToFloat(String length, float relative, float offset, float scale, double fontSize) {
+            unit	relative to
+            em	    font size of the element
+            ex	    x-height of the element’s font
+            ch	    width of the "0" (ZERO, U+0030) glyph in the element’s font
+            rem	    font size of the root element
+            vw	    1% of viewport’s width
+            vh	    1% of viewport’s height
+            vmin	1% of viewport’s smaller dimension
+            vmax	1% of viewport’s larger dimension
+
+            relative-size [ larger | smaller ]
+            absolute-size: [ xx-small | x-small | small | medium | large | x-large | xx-large ]
+
+            https://www.w3.org/TR/css3-values/#relative-lengths
+            https://www.w3.org/TR/css3-values/#absolute-lengths
+            https://drafts.csswg.org/css-cascade-4/#computed-value
+            https://drafts.csswg.org/css-fonts-3/#propdef-font-size
+            https://drafts.csswg.org/css2/fonts.html#propdef-font-size
+        */
         length = length.trim();
         int stringLength = length.length();
         int percentIndex = stringLength - 1;
         if (stringLength == 0) {
             return offset;
         } else if (length.codePointAt(percentIndex) == '%') {
-            return Float.valueOf(length.substring(0, percentIndex)) / 100 * relative + offset;
+            return Double.valueOf(length.substring(0, percentIndex)) / 100 * relative + offset;
         } else {
             int twoLetterUnitIndex = stringLength - 2;
             if (twoLetterUnitIndex > 0) {
                 String lastTwo = length.substring(twoLetterUnitIndex);
                 int end = twoLetterUnitIndex;
-                float unit = 1;
+                double unit = 1;
 
                 switch (lastTwo) {
                     case "px":
                         break;
 
                     case "em":
-                        unit = (float) fontSize;
+                        unit = fontSize;
                         break;
 
                     /*
@@ -124,7 +145,7 @@ class PropHelper {
                      */
 
                     case "pt":
-                        unit = 1.25f;
+                        unit = 1.25d;
                         break;
 
                     case "pc":
@@ -132,11 +153,11 @@ class PropHelper {
                         break;
 
                     case "mm":
-                        unit = 3.543307f;
+                        unit = 3.543307d;
                         break;
 
                     case "cm":
-                        unit = 35.43307f;
+                        unit = 35.43307d;
                         break;
 
                     case "in":
@@ -147,9 +168,9 @@ class PropHelper {
                         end = stringLength;
                 }
 
-                return Float.valueOf(length.substring(0, end)) * unit * scale + offset;
+                return Double.valueOf(length.substring(0, end)) * unit * scale + offset;
             } else {
-                return Float.valueOf(length) * scale + offset;
+                return Double.valueOf(length) * scale + offset;
             }
         }
     }
