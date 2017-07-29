@@ -15,7 +15,6 @@ import android.graphics.Path;
 
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
-import com.facebook.react.uimanager.ReactShadowNode;
 import com.facebook.react.uimanager.annotations.ReactProp;
 
 import javax.annotation.Nullable;
@@ -25,35 +24,30 @@ import javax.annotation.Nullable;
  */
 
 class TextShadowNode extends GroupShadowNode {
-
-    private static final int TEXT_ANCHOR_AUTO = 0;
-    // static final int TEXT_ANCHOR_START = 1;
-    static final int TEXT_ANCHOR_MIDDLE = 2;
-    static final int TEXT_ANCHOR_END = 3;
-
-    private static final int TEXT_DECORATION_NONE = 0;
-    static final int TEXT_DECORATION_UNDERLINE = 1;
-    // static final int TEXT_DECORATION_OVERLINE = 2;
-    static final int TEXT_DECORATION_LINE_THROUGH = 3;
-    // static final int TEXT_DECORATION_BLINK = 4;
-
-    private int mTextAnchor = TEXT_ANCHOR_AUTO;
-    private int mTextDecoration = TEXT_DECORATION_NONE;
+    String mTextLength = null;
+    TextLengthAdjust mLengthAdjust = TextLengthAdjust.spacing;
+    AlignmentBaseline mAlignmentBaseline;
     private @Nullable ReadableArray mPositionX;
     private @Nullable ReadableArray mPositionY;
     private @Nullable ReadableArray mRotate;
     private @Nullable ReadableArray mDeltaX;
     private @Nullable ReadableArray mDeltaY;
 
-    @ReactProp(name = "textAnchor")
-    public void setTextAnchor(int textAnchor) {
-        mTextAnchor = textAnchor;
+    @ReactProp(name = "textLength")
+    public void setmTextLength(@Nullable String length) {
+        mTextLength = length;
         markUpdated();
     }
 
-    @ReactProp(name = "textDecoration")
-    public void setTextDecoration(int textDecoration) {
-        mTextDecoration = textDecoration;
+    @ReactProp(name = "lengthAdjust")
+    public void setLengthAdjust(@Nullable String adjustment) {
+        mLengthAdjust = TextLengthAdjust.valueOf(adjustment);
+        markUpdated();
+    }
+
+    @ReactProp(name = "alignmentBaseline")
+    public void setMethod(@Nullable String alignment) {
+        mAlignmentBaseline = AlignmentBaseline.valueOf(alignment);
         markUpdated();
     }
 
@@ -110,52 +104,6 @@ class TextShadowNode extends GroupShadowNode {
         Path groupPath = getGroupPath(canvas, paint);
         releaseCachedPath();
         return groupPath;
-    }
-
-    private int getTextAnchor() {
-        return mTextAnchor;
-    }
-
-    int getComputedTextAnchor() {
-        int anchor = mTextAnchor;
-        if (anchor != TEXT_ANCHOR_AUTO) {
-            return anchor;
-        }
-        ReactShadowNode shadowNode = this.getParent();
-
-        while (shadowNode instanceof GroupShadowNode) {
-            if (shadowNode instanceof TextShadowNode) {
-                anchor = ((TextShadowNode) shadowNode).getTextAnchor();
-                if (anchor != TEXT_ANCHOR_AUTO) {
-                    break;
-                }
-            }
-
-            shadowNode = shadowNode.getParent();
-        }
-
-        return anchor;
-    }
-
-    int getTextDecoration() {
-        int decoration = mTextDecoration;
-        if (decoration != TEXT_DECORATION_NONE) {
-            return decoration;
-        }
-        ReactShadowNode shadowNode = this.getParent();
-
-        while (shadowNode instanceof GroupShadowNode) {
-            if (shadowNode instanceof TextShadowNode) {
-                decoration = ((TextShadowNode) shadowNode).getTextDecoration();
-                if (decoration != TEXT_DECORATION_NONE) {
-                    break;
-                }
-            }
-
-            shadowNode = shadowNode.getParent();
-        }
-
-        return decoration;
     }
 
     void releaseCachedPath() {

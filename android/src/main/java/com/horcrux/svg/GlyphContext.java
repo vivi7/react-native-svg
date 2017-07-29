@@ -9,10 +9,8 @@
 
 package com.horcrux.svg;
 
-import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
-import com.facebook.react.bridge.WritableMap;
 
 import java.util.ArrayList;
 
@@ -20,25 +18,9 @@ import javax.annotation.Nullable;
 
 // https://www.w3.org/TR/SVG/text.html#TSpanElement
 class GlyphContext {
-    static final double DEFAULT_FONT_SIZE = 12d;
-
-    private static final String KERNING = "kerning";
-    private static final String FONT_SIZE = "fontSize";
-    private static final String FONT_STYLE = "fontStyle";
-    private static final String FONT_WEIGHT = "fontWeight";
-    private static final String FONT_FAMILY = "fontFamily";
-    private static final String WORD_SPACING = "wordSpacing";
-    private static final String LETTER_SPACING = "letterSpacing";
-
-    // Empty font context map
-    private static final WritableMap DEFAULT_MAP = Arguments.createMap();
-
-    static {
-        DEFAULT_MAP.putDouble(FONT_SIZE, DEFAULT_FONT_SIZE);
-    }
 
     // Current stack (one per node push/pop)
-    private final ArrayList<ReadableMap> mFontContext = new ArrayList<>();
+    private final ArrayList<FontData> mFontContext = new ArrayList<>();
 
     // Unique input attribute lists (only added if node sets a value)
     private final ArrayList<String[]> mXsContext = new ArrayList<>();
@@ -62,8 +44,8 @@ class GlyphContext {
     private final ArrayList<Integer> mRsIndices = new ArrayList<>();
 
     // Calculated on push context, percentage and em length depends on parent font size
-    private double mFontSize = DEFAULT_FONT_SIZE;
-    private ReadableMap topFont = DEFAULT_MAP;
+    private double mFontSize = FontData.DEFAULT_FONT_SIZE;
+    private FontData topFont = FontData.Defaults;
 
     // Current accumulated values
     // https://www.w3.org/TR/SVG/types.html#DataTypeCoordinate
@@ -135,8 +117,6 @@ class GlyphContext {
         mWidth = width;
         mHeight = height;
 
-        mFontContext.add(DEFAULT_MAP);
-
         mXsContext.add(mXs);
         mYsContext.add(mYs);
         mDXsContext.add(mDXs);
@@ -149,6 +129,8 @@ class GlyphContext {
         mDYIndices.add(mDYIndex);
         mRIndices.add(mRIndex);
 
+        mFontContext.add(topFont);
+
         pushIndices();
     }
 
@@ -158,54 +140,30 @@ class GlyphContext {
         mX = mY = mDX = mDY = 0;
     }
 
-    ReadableMap getFont() {
+    FontData getFont() {
         return topFont;
     }
 
-    private ReadableMap getTopOrParentFont(GroupShadowNode child) {
+    private FontData getTopOrParentFont(GroupShadowNode child) {
         if (mTop > 0) {
             return topFont;
         } else {
             GroupShadowNode parentRoot = child.getParentTextRoot();
 
             while (parentRoot != null) {
-                ReadableMap map = parentRoot.getGlyphContext().getFont();
-                if (map != DEFAULT_MAP) {
+                FontData map = parentRoot.getGlyphContext().getFont();
+                if (map != FontData.Defaults) {
                     return map;
                 }
                 parentRoot = parentRoot.getParentTextRoot();
             }
 
-            return DEFAULT_MAP;
-        }
-    }
-
-    private static void put(String key, WritableMap map, ReadableMap font, ReadableMap parent) {
-        if (font.hasKey(key)) {
-            map.putString(key, font.getString(key));
-        } else if (parent.hasKey(key)) {
-            map.putString(key, parent.getString(key));
-        }
-    }
-
-    private void putD(String key, WritableMap map, ReadableMap font, ReadableMap parent) {
-        if (font.hasKey(key)) {
-            String string = font.getString(key);
-            double value = PropHelper.fromRelative(
-                string,
-                0,
-                0,
-                mScale,
-                mFontSize
-            );
-            map.putDouble(key, value);
-        } else if (parent.hasKey(key)) {
-            map.putDouble(key, parent.getDouble(key));
+            return FontData.Defaults;
         }
     }
 
     private void pushNodeAndFont(GroupShadowNode node, @Nullable ReadableMap font) {
-        ReadableMap parent = getTopOrParentFont(node);
+        FontData parent = getTopOrParentFont(node);
         mTop++;
 
         if (font == null) {
@@ -213,44 +171,11 @@ class GlyphContext {
             return;
         }
 
-        WritableMap map = Arguments.createMap();
-        mFontContext.add(map);
-        topFont = map;
+        FontData data = new FontData(font, parent, mScale);
+        mFontSize = data.fontSize;
+        mFontContext.add(data);
+        topFont = data;
 
-        double parentFontSize = parent.getDouble(FONT_SIZE);
-
-        if (font.hasKey(FONT_SIZE)) {
-            String string = font.getString(FONT_SIZE);
-            double value = PropHelper.fromRelative(
-                string,
-                parentFontSize,
-                0,
-                1,
-                parentFontSize
-            );
-            map.putDouble(FONT_SIZE, value);
-            mFontSize = value;
-        } else {
-            mFontSize = parentFontSize;
-        }
-
-        map.putDouble(FONT_SIZE, mFontSize);
-
-        put(FONT_FAMILY, map, font, parent);
-
-        put(FONT_WEIGHT, map, font, parent);
-
-        put(FONT_STYLE, map, font, parent);
-
-        // https://www.w3.org/TR/SVG11/text.html#SpacingProperties
-        // https://drafts.csswg.org/css-text-3/#spacing
-        // calculated values for units in: kerning,  word-spacing, and, letter-spacing
-
-        putD(KERNING, map, font, parent);
-
-        putD(WORD_SPACING, map, font, parent);
-
-        putD(LETTER_SPACING, map, font, parent);
     }
 
     void pushContext(GroupShadowNode node, @Nullable ReadableMap font) {
@@ -428,7 +353,7 @@ class GlyphContext {
         return mFontSize;
     }
 
-    double nextX(double glyphWidth) {
+    double nextX(double advance) {
         incrementIndices(mXIndices, mXsIndex);
 
         int nextIndex = mXIndex + 1;
@@ -439,7 +364,7 @@ class GlyphContext {
             mX = PropHelper.fromRelative(string, mWidth, 0, mScale, mFontSize);
         }
 
-        mX += glyphWidth;
+        mX += advance;
 
         return mX;
     }

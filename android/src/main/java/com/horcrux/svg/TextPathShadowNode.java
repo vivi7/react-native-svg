@@ -23,9 +23,11 @@ import javax.annotation.Nullable;
 class TextPathShadowNode extends TextShadowNode {
 
     private String mHref;
-    private String mMethod;
-    private String mSpacing;
+    private TextPathSide mSide;
+    private TextPathMidLine mMidLine;
     private @Nullable String mStartOffset;
+    private TextPathMethod mMethod = TextPathMethod.align;
+    private TextPathSpacing mSpacing = TextPathSpacing.exact;
 
     @ReactProp(name = "href")
     public void setHref(String href) {
@@ -41,22 +43,42 @@ class TextPathShadowNode extends TextShadowNode {
 
     @ReactProp(name = "method")
     public void setMethod(@Nullable String method) {
-        mMethod = method;
+        mMethod = TextPathMethod.valueOf(method);
         markUpdated();
     }
 
     @ReactProp(name = "spacing")
     public void setSpacing(@Nullable String spacing) {
-        mSpacing = spacing;
+        mSpacing = TextPathSpacing.valueOf(spacing);
         markUpdated();
     }
 
-    String getMethod() {
+    @ReactProp(name = "side")
+    public void setSide(@Nullable String side) {
+        mSide = TextPathSide.valueOf(side);
+        markUpdated();
+    }
+
+    @ReactProp(name = "midLine")
+    public void setSharp(@Nullable String midLine) {
+        mMidLine = TextPathMidLine.valueOf(midLine);
+        markUpdated();
+    }
+
+    TextPathMethod getMethod() {
         return mMethod;
     }
 
-    public String getSpacing() {
+    public TextPathSpacing getSpacing() {
         return mSpacing;
+    }
+
+    public TextPathSide getSide() {
+        return mSide;
+    }
+
+    public TextPathMidLine getMidLine() {
+        return mMidLine;
     }
 
     String getStartOffset() {
