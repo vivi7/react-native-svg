@@ -118,6 +118,11 @@ class TSpanShadowNode extends TextShadowNode {
         final char[] chars = line.toCharArray();
         float[] advances = new float[length];
         paint.getTextWidths(line, advances);
+
+        /*
+        This would give both advances and textMeasure in one call / looping over the text
+        double textMeasure = paint.getTextRunAdvances(line, 0, length, 0, length, true, advances, 0);
+        */
         /*
             Determine the startpoint-on-the-path for the first glyph using attribute ‘startOffset’
             and property text-anchor.
@@ -285,6 +290,63 @@ class TSpanShadowNode extends TextShadowNode {
         final boolean autoKerning = !font.manualKerning;
 
         /*
+        11.1.2. Fonts and glyphs
+
+        A font consists of a collection of glyphs together with other information (collectively,
+        the font tables) necessary to use those glyphs to present characters on some visual medium.
+
+        The combination of the collection of glyphs and the font tables is called the font data.
+
+        A font may supply substitution and positioning tables that can be used by a formatter
+        (text shaper) to re-order, combine and position a sequence of glyphs to form one or more
+        composite glyphs.
+
+        The combining may be as simple as a ligature, or as complex as an indic syllable which
+        combines, usually with some re-ordering, multiple consonants and vowel glyphs.
+
+        The tables may be language dependent, allowing the use of language appropriate letter forms.
+
+        When a glyph, simple or composite, represents an indivisible unit for typesetting purposes,
+        it is know as a typographic character.
+
+        Ligatures are an important feature of advance text layout. Some ligatures are discretionary
+        (TODO) while others (e.g. in Arabic) are required.
+
+        The following explicit rules apply to ligature formation:
+
+        Ligature formation should not be enabled when characters are in different DOM text nodes;
+        thus, characters separated by markup should not use ligatures.
+
+        Ligature formation should not be enabled when characters are in different text chunks.
+
+        Discretionary ligatures should not be used when the spacing between two characters is not
+        the same as the default space (e.g. when letter-spacing has a non-default value,
+        or text-align has a value of justify and text-justify has a value of distribute).
+        (See CSS Text Module Level 3, ([css-text-3]).
+
+        SVG attributes such as ‘dx’, ‘textLength’, and ‘spacing’ (in ‘textPath’) that may reposition
+        typographic characters do not break discretionary ligatures.
+
+        If discretionary ligatures are not desired
+        they can be turned off by using the font-variant-ligatures property.
+
+        /*
+            When the effective letter-spacing between two characters is not zero
+            (due to either justification or non-zero computed ‘letter-spacing’),
+            user agents should not apply optional ligatures.
+            https://www.w3.org/TR/css-text-3/#letter-spacing-property
+        */
+        final boolean allowOptionalLigatures = letterSpacing == 0 &&
+            font.fontVariantLigatures == FontVariantLigatures.normal;
+
+        /*
+            For OpenType fonts, discretionary ligatures include those enabled by
+            the liga, clig, dlig, hlig, and cala features;
+            TODO required ligatures are found in the rlig feature.
+            https://svgwg.org/svg2-draft/text.html#FontsGlyphs
+        */
+
+        /*
             Name	Value	Initial value	Animatable
             textLength	<length> | <percentage> | <number>	See below	yes
 
@@ -376,6 +438,7 @@ class TSpanShadowNode extends TextShadowNode {
         final double descenderDepth = fm.descent;
         final double totalHeight = top + bottom;
         double baselineShift = 0;
+        String baselineShiftString = getBaselineShift();
         AlignmentBaseline baseline = getAlignmentBaseline();
         if (baseline != null) {
             // TODO alignment-baseline, test / verify behavior
@@ -463,6 +526,59 @@ class TSpanShadowNode extends TextShadowNode {
                     baselineShift = top;
                     break;
             }
+        /*
+        2.2.2. Alignment Shift: baseline-shift longhand
+
+        This property specifies by how much the box is shifted up from its alignment point.
+        It does not apply when alignment-baseline is top or bottom.
+
+        Authors should use the vertical-align shorthand instead of this property.
+
+        Values have the following meanings:
+
+        <length>
+        Raise (positive value) or lower (negative value) by the specified length.
+        <percentage>
+        Raise (positive value) or lower (negative value) by the specified percentage of the line-height.
+        TODO sub
+        Lower by the offset appropriate for subscripts of the parent’s box.
+        (The UA should use the parent’s font data to find this offset whenever possible.)
+        TODO super
+        Raise by the offset appropriate for superscripts of the parent’s box.
+        (The UA should use the parent’s font data to find this offset whenever possible.)
+
+        User agents may additionally support the keyword baseline as computing to 0
+        if is necessary for them to support legacy SVG content.
+        Issue: We would prefer to remove this,
+        and are looking for feedback from SVG user agents as to whether it’s necessary.
+
+        https://www.w3.org/TR/css-inline-3/#propdef-baseline-shift
+        */
+            if (baselineShiftString != null) {
+                switch (baseline) {
+                    case top:
+                    case bottom:
+                        break;
+
+                    default:
+                        switch (baselineShiftString) {
+                            case "sub":
+                                // TODO
+                                break;
+
+                            case "super":
+                                // TODO
+                                break;
+
+                            case "baseline":
+                                break;
+
+                            default:
+                                baselineShift -= PropHelper.fromRelative(baselineShiftString, fontSize, 0, mScale, fontSize);
+                        }
+                        break;
+                }
+            }
         }
 
         final Matrix start = new Matrix();
@@ -472,31 +588,37 @@ class TSpanShadowNode extends TextShadowNode {
         final float[] startPointMatrixData = new float[9];
         final float[] endPointMatrixData = new float[9];
 
+        String previous = "";
+        double previousCharWidth = 0;
+
         for (int index = 0; index < length; index++) {
-            if (ligature[index]) {
-                // Skip rendering other grapheme clusters of ligatures (already rendered)
-                continue;
-            }
             char currentChar = chars[index];
             String current = String.valueOf(currentChar);
+            boolean alreadyRenderedGraphemeCluster = ligature[index];
 
             /*
                 Determine the glyph's charwidth (i.e., the amount which the current text position
                 advances horizontally when the glyph is drawn using horizontal text layout).
             */
             boolean hasLigature = false;
-            int nextIndex = index;
-            while (++nextIndex < length) {
-                float nextWidth = advances[nextIndex];
-                if (nextWidth > 0) {
-                    break;
-                }
-                String nextLigature = current + String.valueOf(chars[nextIndex]);
-                boolean hasNextLigature = PaintCompat.hasGlyph(paint, nextLigature);
-                if (hasNextLigature) {
-                    ligature[nextIndex] = true;
-                    current = nextLigature;
-                    hasLigature = true;
+            if (allowOptionalLigatures) {
+                if (alreadyRenderedGraphemeCluster) {
+                    current = "";
+                } else {
+                    int nextIndex = index;
+                    while (++nextIndex < length) {
+                        float nextWidth = advances[nextIndex];
+                        if (nextWidth > 0) {
+                            break;
+                        }
+                        String nextLigature = current + String.valueOf(chars[nextIndex]);
+                        boolean hasNextLigature = PaintCompat.hasGlyph(paint, nextLigature);
+                        if (hasNextLigature) {
+                            ligature[nextIndex] = true;
+                            current = nextLigature;
+                            hasLigature = true;
+                        }
+                    }
                 }
             }
             double charWidth = paint.measureText(current) * scaleSpacingAndGlyphs;
@@ -511,8 +633,16 @@ class TSpanShadowNode extends TextShadowNode {
                 using the user agent's distance along the path algorithm.
             */
             if (autoKerning) {
-                double kerned = advances[index] * scaleSpacingAndGlyphs;
-                kerning = kerned - charWidth;
+                if (allowOptionalLigatures) {
+                    double kerned = advances[index] * scaleSpacingAndGlyphs;
+                    kerning = kerned - charWidth;
+                } else {
+                    double bothCharsWidth = paint.measureText(previous + current) * scaleSpacingAndGlyphs;
+                    double kerned = bothCharsWidth - previousCharWidth;
+                    kerning = kerned - charWidth;
+                    previousCharWidth = charWidth;
+                    previous = current;
+                }
             }
 
             boolean isWordSeparator = currentChar == ' ';
@@ -525,6 +655,12 @@ class TSpanShadowNode extends TextShadowNode {
             double dx = gc.nextDeltaX();
             double dy = gc.nextDeltaY();
             double r = gc.nextRotation();
+
+            if (alreadyRenderedGraphemeCluster) {
+                // Skip rendering other grapheme clusters of ligatures (already rendered),
+                // But, make sure to increment index positions by making gc.next() calls.
+                continue;
+            }
 
             advance = advance * side;
             charWidth = charWidth * side;
