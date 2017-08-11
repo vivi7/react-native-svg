@@ -14,9 +14,9 @@ import android.util.SparseArray;
 
 import com.facebook.yoga.YogaMeasureMode;
 import com.facebook.yoga.YogaMeasureFunction;
-import com.facebook.yoga.YogaNode;
 import com.facebook.react.uimanager.BaseViewManager;
 import com.facebook.react.uimanager.ThemedReactContext;
+import com.facebook.yoga.YogaNodeAPI;
 
 import javax.annotation.Nullable;
 
@@ -31,7 +31,7 @@ class SvgViewManager extends BaseViewManager<SvgView, SvgViewShadowNode> {
     private static final YogaMeasureFunction MEASURE_FUNCTION = new YogaMeasureFunction() {
         @Override
         public long measure(
-                YogaNode node,
+                YogaNodeAPI node,
                 float width,
                 YogaMeasureMode widthMode,
                 float height,

@@ -51,7 +51,6 @@ public class SvgView extends View {
 
     private @Nullable Bitmap mBitmap;
     private final EventDispatcher mEventDispatcher;
-    private long mGestureStartTime = TouchEvent.UNSET;
     private int mTargetTag;
 
     private final TouchEventCoalescingKeyHelper mTouchEventCoalescingKeyHelper =
@@ -129,7 +128,6 @@ public class SvgView extends View {
                 mTargetTag,
                 type,
                 ev,
-                mGestureStartTime,
                 ev.getX(),
                 ev.getY(),
                 mTouchEventCoalescingKeyHelper));
@@ -138,7 +136,6 @@ public class SvgView extends View {
     private void handleTouchEvent(MotionEvent ev) {
         int action = ev.getAction() & MotionEvent.ACTION_MASK;
         if (action == MotionEvent.ACTION_DOWN) {
-            mGestureStartTime = ev.getEventTime();
             dispatch(ev, TouchEventType.START);
         } else if (mTargetTag == -1) {
             // All the subsequent action types are expected to be called after ACTION_DOWN thus target
@@ -162,11 +159,9 @@ public class SvgView extends View {
             // Exactly onw of the pointers goes up
             dispatch(ev, TouchEventType.END);
             mTargetTag = -1;
-            mGestureStartTime = TouchEvent.UNSET;
         } else if (action == MotionEvent.ACTION_CANCEL) {
             dispatchCancelEvent(ev);
             mTargetTag = -1;
-            mGestureStartTime = TouchEvent.UNSET;
         } else {
             Log.w(
                 "IGNORE",

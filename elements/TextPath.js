@@ -1,5 +1,5 @@
 import React from 'react';
-import createReactNativeComponentClass from 'react-native/Libraries/Renderer/shims/createReactNativeComponentClass';
+import createReactNativeComponentClass from 'react-native/Libraries/Renderer/src/renderers/native/createReactNativeComponentClass';
 import {TextPathAttributes} from '../lib/attributes';
 import extractText from '../lib/extract/extractText';
 import Shape from './Shape';
