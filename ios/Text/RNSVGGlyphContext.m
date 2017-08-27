@@ -10,6 +10,7 @@
 #import "RNSVGGlyphContext.h"
 #import "RNSVGPercentageConverter.h"
 #import <React/RCTFont.h>
+#import "RNSVGNode.h"
 
 @implementation RNSVGGlyphContext
 {
@@ -21,6 +22,7 @@
     CGPoint _currentLocation;
     CGFloat _width;
     CGFloat _height;
+    CGFloat _fontSize;
 }
 
 - (instancetype)initWithDimensions:(CGFloat)width height:(CGFloat)height
@@ -34,22 +36,47 @@
         _deltaYContext = [[NSMutableArray alloc] init];
         _xContext = [[NSMutableArray alloc] init];
         _currentLocation = CGPointZero;
+        _fontSize = DEFAULT_FONT_SIZE;
     }
     return self;
+}
+
+- (CGFloat) getWidth
+{
+    return _width;
+}
+
+- (CGFloat) getHeight {
+    return _height;
+}
+
+- (CGFloat) getFontSize
+{
+    return _fontSize;
+}
+
+- (void)pushContext:(NSDictionary *)font
+{
+    CGPoint location = _currentLocation;
+
+    [_locationContext addObject:[NSValue valueWithCGPoint:location]];
+    [_fontContext addObject:font ? font : @{}];
+    [_xContext addObject:[NSNumber numberWithFloat:location.x]];
+    _currentLocation = location;
 }
 
 - (void)pushContext:(NSDictionary *)font deltaX:(NSArray<NSString *> *)deltaX deltaY:(NSArray<NSString *> *)deltaY positionX:(NSArray<NSString *> *)positionX positionY:(NSArray<NSString *> *)positionY
 {
     CGPoint location = _currentLocation;
-    
+
     if (positionX) {
         location.x = [RNSVGPercentageConverter stringToFloat:[positionX firstObject] relative:_width offset:0];
     }
-    
+
     if (positionY) {
         location.y = [RNSVGPercentageConverter stringToFloat:[positionY firstObject] relative:_height offset:0];
     }
-    
+
     [_locationContext addObject:[NSValue valueWithCGPoint:location]];
     [_fontContext addObject:font ? font : @{}];
     [_deltaXContext addObject:deltaX ? deltaX : @[]];
@@ -66,11 +93,11 @@
     [_deltaXContext removeLastObject];
     [_deltaYContext removeLastObject];
     [_xContext removeLastObject];
-    
+
     if (_xContext.count) {
         [_xContext replaceObjectAtIndex:_xContext.count - 1 withObject:x];
     }
-    
+
     if (_locationContext.count) {
         _currentLocation = [[_locationContext lastObject] CGPointValue];
         _currentLocation.x = [x floatValue];
@@ -84,17 +111,17 @@
     CGPoint currentLocation = _currentLocation;
     NSNumber *dx = [self getNextDelta:_deltaXContext];
     currentLocation.x += [dx floatValue];
-    
+
     NSNumber *dy = [self getNextDelta:_deltaYContext];
     currentLocation.y += [dy floatValue];
-    
+
     for (NSUInteger i = 0; i < _locationContext.count; i++) {
         CGPoint point = [[_locationContext objectAtIndex:i] CGPointValue];
         point.x += [dx floatValue];
         point.y += [dy floatValue];
         [_locationContext replaceObjectAtIndex:i withObject:[NSValue valueWithCGPoint:point]];
     }
-    
+
     _currentLocation = currentLocation;
     NSNumber *x = [NSNumber numberWithFloat:currentLocation.x + offset.x + glyphWidth];
     [_xContext replaceObjectAtIndex:_xContext.count - 1 withObject:x];
@@ -110,14 +137,14 @@
         if (value == nil) {
             value = [delta firstObject];
         }
-        
+
         if (delta.count) {
             NSMutableArray *mutableDelta = [delta mutableCopy];
             [mutableDelta removeObjectAtIndex:0];
             [deltaContext replaceObjectAtIndex:index withObject:[mutableDelta copy]];
         }
     }
-    
+
     return value;
 }
 
@@ -134,26 +161,26 @@
         if (!fontFamily) {
             fontFamily = font[@"fontFamily"];
         }
-        
+
         if (fontSize == nil) {
             fontSize = [f numberFromString:font[@"fontSize"]];
         }
-        
+
         if (!fontWeight) {
             fontWeight = font[@"fontWeight"];
         }
         if (!fontStyle) {
             fontStyle = font[@"fontStyle"];
         }
-        
+
         if (fontFamily && fontSize && fontWeight && fontStyle) {
             break;
         }
     }
-    
+
     BOOL fontFamilyFound = NO;
     NSArray *supportedFontFamilyNames = [UIFont familyNames];
-    
+
     if ([supportedFontFamilyNames containsObject:fontFamily]) {
         fontFamilyFound = YES;
     } else {
@@ -165,7 +192,7 @@
         }
     }
     fontFamily = fontFamilyFound ? fontFamily : nil;
-    
+
     return (__bridge CTFontRef)[RCTFont updateFont:nil
                                         withFamily:fontFamily
                                               size:fontSize
