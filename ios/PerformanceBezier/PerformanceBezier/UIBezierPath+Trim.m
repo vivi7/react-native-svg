@@ -8,7 +8,7 @@
 
 #import "UIBezierPath+Trim.h"
 #import <objc/runtime.h>
-#import <PerformanceBezier/PerformanceBezier.h>
+#import "PerformanceBezier.h"
 
 @implementation UIBezierPath (Trim)
 

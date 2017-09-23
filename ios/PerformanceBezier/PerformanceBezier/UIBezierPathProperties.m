@@ -64,17 +64,11 @@
 // for some reason the iPad 1 on iOS 5 needs to have this
 // method coded and not synthesized.
 -(void) setBezierPathByFlatteningPath:(UIBezierPath *)_bezierPathByFlatteningPath{
-    if(bezierPathByFlatteningPath != _bezierPathByFlatteningPath){
-        [bezierPathByFlatteningPath release];
-        [_bezierPathByFlatteningPath retain];
-    }
     bezierPathByFlatteningPath = _bezierPathByFlatteningPath;
 }
 
 -(void) dealloc{
-    [bezierPathByFlatteningPath release];
     bezierPathByFlatteningPath = nil;
-    [super dealloc];
 }
 
 

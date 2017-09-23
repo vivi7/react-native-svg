@@ -7,7 +7,7 @@
 //
 
 #import "UIBezierPath+Trimming.h"
-#import <PerformanceBezier/PerformanceBezier.h>
+#import "PerformanceBezier.h"
 #pragma mark - Subdivide helpers by Alastair J. Houghton
 /*
  * Bezier path utility category (trimming)
@@ -60,27 +60,27 @@
     double       length = 0.0;
     CGPoint      pointForClose = CGPointMake(0.0, 0.0);
     CGPoint      lastPoint = CGPointMake (0.0, 0.0);
-    
+
     for (n = 0; n < elements; ++n) {
         CGPoint		points[3];
         CGPathElement element = [self elementAtIndex:n
                                           associatedPoints:points];
         double		elementLength;
         double		remainingLength = trimLength - length;
-        
+
         if(remainingLength == 0){
             break;
         }
-        
+
         switch (element.type) {
             case kCGPathElementMoveToPoint:
                 [newPath moveToPoint:points[0]];
                 pointForClose = lastPoint = points[0];
                 continue;
-                
+
             case kCGPathElementAddLineToPoint:
                 elementLength = distance (lastPoint, points[0]);
-                
+
                 if (length + elementLength <= trimLength)
                     [newPath addLineToPoint:points[0]];
                 else {
@@ -91,11 +91,11 @@
                                                       + f * (points[0].y - lastPoint.y))];
                     return newPath;
                 }
-                
+
                 length += elementLength;
                 lastPoint = points[0];
                 break;
-                
+
             case kCGPathElementAddCurveToPoint:
             case kCGPathElementAddQuadCurveToPoint: {
                 CGPoint bezier[4];
@@ -111,7 +111,7 @@
                     bezier[3] = points[1];
                 }
                 elementLength = lengthOfBezier (bezier, maxError);
-                
+
                 if (length + elementLength <= trimLength)
                     [newPath addCurveToPoint:points[2] controlPoint1:points[0] controlPoint2:points[1]];
                 else {
@@ -121,15 +121,15 @@
                     [newPath addCurveToPoint:bez1[3] controlPoint1:bez1[1] controlPoint2:bez1[2]];
                     return newPath;
                 }
-                
+
                 length += elementLength;
                 lastPoint = points[2];
                 break;
             }
-                
+
             case kCGPathElementCloseSubpath:
                 elementLength = distance (lastPoint, pointForClose);
-                
+
                 if (length + elementLength <= trimLength)
                     [newPath closePath];
                 else {
@@ -140,13 +140,13 @@
                                                       + f * (points[0].y - lastPoint.y))];
                     return newPath;
                 }
-                
+
                 length += elementLength;
                 lastPoint = pointForClose;
                 break;
         }
     }
-    
+
     return newPath;
 }
 
@@ -168,14 +168,14 @@
     CGPoint      pointForClose = CGPointMake (0.0, 0.0);
     CGPoint      lastPoint = CGPointMake (0.0, 0.0);
     BOOL legitMoveTo = NO;
-    
+
     for (n = 0; n < elements; ++n) {
         CGPoint		points[3];
         CGPathElement element = [self elementAtIndex:n
                                           associatedPoints:points];
         double		elementLength;
         double		remainingLength = trimLength - length;
-        
+
         switch (element.type) {
             case kCGPathElementMoveToPoint:
                 if(remainingLength < 0){
@@ -184,10 +184,10 @@
                 }
                 pointForClose = lastPoint = points[0];
                 continue;
-                
+
             case kCGPathElementAddLineToPoint:
                 elementLength = distance (lastPoint, points[0]);
-                
+
                 if (length > trimLength){
                     [newPath addLineToPoint:points[0]];
                 }else if (length + elementLength > trimLength) {
@@ -198,11 +198,11 @@
                                                       + f * (points[0].y - lastPoint.y))];
                     [newPath addLineToPoint:points[0]];
                 }
-                
+
                 length += elementLength;
                 lastPoint = points[0];
                 break;
-                
+
             case kCGPathElementAddCurveToPoint:
             case kCGPathElementAddQuadCurveToPoint: {
                 CGPoint bezier[4];
@@ -218,7 +218,7 @@
                     bezier[3] = points[1];
                 }
                 elementLength = lengthOfBezier (bezier, maxError);
-                
+
                 if (length > trimLength){
                     [newPath addCurveToPoint:points[2]
                             controlPoint1:points[0]
@@ -232,15 +232,15 @@
                             controlPoint1:bez2[1]
                             controlPoint2:bez2[2]];
                 }
-                
+
                 length += elementLength;
                 lastPoint = points[2];
                 break;
             }
-                
+
             case kCGPathElementCloseSubpath:
                 elementLength = distance (lastPoint, pointForClose);
-                
+
                 if (length > trimLength){
                     if(legitMoveTo){
                         [newPath closePath];
@@ -255,13 +255,13 @@
                                                       + f * (points[0].y - lastPoint.y))];
                     [newPath addLineToPoint:points[0]];
                 }
-                
+
                 length += elementLength;
                 lastPoint = pointForClose;
                 break;
         }
-    } 
-    
+    }
+
     return newPath;
 }
 
@@ -303,10 +303,10 @@
             lastElementEndPoint = element.points[0];
         }else if(element.type == kCGPathElementAddQuadCurveToPoint ||
                  element.type == kCGPathElementAddCurveToPoint){
-            
+
             CGPoint bez[4];
             bez[0] = lastElementEndPoint;
-            
+
             if(element.type == kCGPathElementAddQuadCurveToPoint){
                 bez[1] = element.points[0];
                 bez[2] = element.points[0];
@@ -318,7 +318,7 @@
                 bez[3] = element.points[2];
                 lastElementEndPoint = element.points[2];
             }
-            
+
             length += lengthOfBezier(bez, .5);;
         }
     }];
@@ -329,17 +329,17 @@
     if([self elementCount] < 2){
         return 0.0;
     }
-    
+
     CGPathElement ele1 = [self elementAtIndex:0];
     CGPathElement ele2 = [self elementAtIndex:1];
-    
+
     if(ele1.type != kCGPathElementMoveToPoint){
         return 0.0;
     }
-    
+
     CGPoint point1 = ele1.points[0];
     CGPoint point2 = CGPointZero;
-    
+
     switch (ele2.type) {
         case kCGPathElementMoveToPoint:
             return 0.0;

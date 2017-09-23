@@ -6,7 +6,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 #import <UIKit/UIKit.h>
-#import <PerformanceBezier/PerformanceBezier.h>
+#import <PerformanceBezier.h>
 #import <Foundation/Foundation.h>
 #import <CoreText/CoreText.h>
 #import "RNSVGText.h"

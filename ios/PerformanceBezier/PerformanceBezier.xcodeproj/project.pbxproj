@@ -7,11 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6617530D1A8DC45A0051D5CB /* PerformanceBezier.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66F2EBE31A8DC05100D536E9 /* PerformanceBezier.framework */; };
 		66AB566C1B0D9830005E6FB1 /* UIBezierPath+Util.h in Headers */ = {isa = PBXBuildFile; fileRef = 66AB566A1B0D9830005E6FB1 /* UIBezierPath+Util.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		66AB566D1B0D9830005E6FB1 /* UIBezierPath+Util.m in Sources */ = {isa = PBXBuildFile; fileRef = 66AB566B1B0D9830005E6FB1 /* UIBezierPath+Util.m */; };
-		66B9D2A61A8D609200CAC341 /* PerformanceBezierAbstractTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 66D4021F1A7EDACA00043802 /* PerformanceBezierAbstractTest.m */; };
-		66B9D2A71A8D609300CAC341 /* PerformanceBezierClockwiseTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 66D4021C1A7EDA9000043802 /* PerformanceBezierClockwiseTests.m */; };
 		66D1B7971AFEAC6F00210262 /* UIBezierPath+Trim.h in Headers */ = {isa = PBXBuildFile; fileRef = 66D1B7951AFEAC6F00210262 /* UIBezierPath+Trim.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		66D1B7981AFEAC6F00210262 /* UIBezierPath+Trim.m in Sources */ = {isa = PBXBuildFile; fileRef = 66D1B7961AFEAC6F00210262 /* UIBezierPath+Trim.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		66F2EBE41A8DC05100D536E9 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6682FF251A8DBACF00187325 /* Foundation.framework */; };
@@ -43,16 +40,6 @@
 		9494C4A11F4715A000D5BCFD /* UIBezierPath+Trimming.m in Sources */ = {isa = PBXBuildFile; fileRef = 9494C49F1F4715A000D5BCFD /* UIBezierPath+Trimming.m */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		6617530E1A8DC8300051D5CB /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 661B30C91A7EB43A008549C7 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 66F2EBE21A8DC05100D536E9;
-			remoteInfo = PerformanceBezier;
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXFileReference section */
 		660E0FD71A80055300F19D8A /* UIBezierPath+Center.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIBezierPath+Center.h"; sourceTree = "<group>"; };
 		660E0FD81A80055300F19D8A /* UIBezierPath+Center.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIBezierPath+Center.m"; sourceTree = "<group>"; };
@@ -83,13 +70,8 @@
 		6682FF251A8DBACF00187325 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		66AB566A1B0D9830005E6FB1 /* UIBezierPath+Util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIBezierPath+Util.h"; sourceTree = "<group>"; };
 		66AB566B1B0D9830005E6FB1 /* UIBezierPath+Util.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIBezierPath+Util.m"; sourceTree = "<group>"; };
-		66B9D28C1A8D5FDE00CAC341 /* PerformanceBezierTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PerformanceBezierTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		66B9D2921A8D5FDF00CAC341 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		66D1B7951AFEAC6F00210262 /* UIBezierPath+Trim.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIBezierPath+Trim.h"; sourceTree = "<group>"; };
 		66D1B7961AFEAC6F00210262 /* UIBezierPath+Trim.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIBezierPath+Trim.m"; sourceTree = "<group>"; };
-		66D4021C1A7EDA9000043802 /* PerformanceBezierClockwiseTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PerformanceBezierClockwiseTests.m; sourceTree = "<group>"; };
-		66D4021E1A7EDACA00043802 /* PerformanceBezierAbstractTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PerformanceBezierAbstractTest.h; sourceTree = "<group>"; };
-		66D4021F1A7EDACA00043802 /* PerformanceBezierAbstractTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PerformanceBezierAbstractTest.m; sourceTree = "<group>"; };
 		66F2EBE31A8DC05100D536E9 /* PerformanceBezier.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework.static; includeInIndex = 0; path = PerformanceBezier.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		66F2EBE71A8DC05100D536E9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		66F2EBEA1A8DC05100D536E9 /* PerformanceBezier-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "PerformanceBezier-Info.plist"; sourceTree = "<group>"; };
@@ -98,14 +80,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		66B9D2891A8D5FDE00CAC341 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				6617530D1A8DC45A0051D5CB /* PerformanceBezier.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		66F2EBDE1A8DC05100D536E9 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -124,7 +98,6 @@
 				66767CC71AFEE4BB00443B03 /* SubdivideLicense */,
 				660E0FDC1A80284C00F19D8A /* LICENSE */,
 				66B9D2831A8D5FDE00CAC341 /* PerformanceBezier */,
-				66B9D2901A8D5FDF00CAC341 /* PerformanceBezierTests */,
 				66F2EBE51A8DC05100D536E9 /* Supporting Files */,
 				6682FF241A8DBACF00187325 /* Frameworks */,
 				667617871A7EB50A00C0B447 /* Products */,
@@ -134,7 +107,6 @@
 		667617871A7EB50A00C0B447 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				66B9D28C1A8D5FDE00CAC341 /* PerformanceBezierTests.xctest */,
 				66F2EBE31A8DC05100D536E9 /* PerformanceBezier.framework */,
 			);
 			name = Products;
@@ -200,25 +172,6 @@
 			path = PerformanceBezier;
 			sourceTree = "<group>";
 		};
-		66B9D2901A8D5FDF00CAC341 /* PerformanceBezierTests */ = {
-			isa = PBXGroup;
-			children = (
-				66D4021E1A7EDACA00043802 /* PerformanceBezierAbstractTest.h */,
-				66D4021F1A7EDACA00043802 /* PerformanceBezierAbstractTest.m */,
-				66D4021C1A7EDA9000043802 /* PerformanceBezierClockwiseTests.m */,
-				66B9D2911A8D5FDF00CAC341 /* Supporting Files */,
-			);
-			path = PerformanceBezierTests;
-			sourceTree = "<group>";
-		};
-		66B9D2911A8D5FDF00CAC341 /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				66B9D2921A8D5FDF00CAC341 /* Info.plist */,
-			);
-			name = "Supporting Files";
-			sourceTree = "<group>";
-		};
 		66F2EBE51A8DC05100D536E9 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
@@ -258,24 +211,6 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		66B9D28B1A8D5FDE00CAC341 /* PerformanceBezierTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 66B9D2961A8D5FDF00CAC341 /* Build configuration list for PBXNativeTarget "PerformanceBezierTests" */;
-			buildPhases = (
-				66B9D2881A8D5FDE00CAC341 /* Sources */,
-				66B9D2891A8D5FDE00CAC341 /* Frameworks */,
-				66B9D28A1A8D5FDE00CAC341 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				6617530F1A8DC8300051D5CB /* PBXTargetDependency */,
-			);
-			name = PerformanceBezierTests;
-			productName = PerformanceBezierTests;
-			productReference = 66B9D28C1A8D5FDE00CAC341 /* PerformanceBezierTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 		66F2EBE21A8DC05100D536E9 /* PerformanceBezier */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 66F2EBF01A8DC05100D536E9 /* Build configuration list for PBXNativeTarget "PerformanceBezier" */;
@@ -307,9 +242,6 @@
 				LastUpgradeCheck = 0830;
 				ORGANIZATIONNAME = "Milestone Made";
 				TargetAttributes = {
-					66B9D28B1A8D5FDE00CAC341 = {
-						CreatedOnToolsVersion = 6.1.1;
-					};
 					66F2EBE21A8DC05100D536E9 = {
 						CreatedOnToolsVersion = 6.1.1;
 					};
@@ -328,19 +260,11 @@
 			projectRoot = "";
 			targets = (
 				66F2EBE21A8DC05100D536E9 /* PerformanceBezier */,
-				66B9D28B1A8D5FDE00CAC341 /* PerformanceBezierTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		66B9D28A1A8D5FDE00CAC341 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		66F2EBE01A8DC05100D536E9 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -397,15 +321,6 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		66B9D2881A8D5FDE00CAC341 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				66B9D2A61A8D609200CAC341 /* PerformanceBezierAbstractTest.m in Sources */,
-				66B9D2A71A8D609300CAC341 /* PerformanceBezierClockwiseTests.m in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		66F2EBDD1A8DC05100D536E9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -427,14 +342,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		6617530F1A8DC8300051D5CB /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 66F2EBE21A8DC05100D536E9 /* PerformanceBezier */;
-			targetProxy = 6617530E1A8DC8300051D5CB /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		661B30CD1A7EB43A008549C7 /* Debug */ = {
@@ -500,111 +407,10 @@
 			};
 			name = Release;
 		};
-		66B9D2971A8D5FDF00CAC341 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				COPY_PHASE_STRIP = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(SDKROOT)/Developer/Library/Frameworks",
-					"$(inherited)",
-					"$(BUILT_PRODUCTS_DIR)/**",
-				);
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = PerformanceBezierTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				MTL_ENABLE_DEBUG_INFO = YES;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					"-ObjC++",
-					"-lstdc++",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.milestonemade.$(PRODUCT_NAME:rfc1034identifier)";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Debug;
-		};
-		66B9D2981A8D5FDF00CAC341 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				COPY_PHASE_STRIP = YES;
-				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(SDKROOT)/Developer/Library/Frameworks",
-					"$(inherited)",
-					"$(BUILT_PRODUCTS_DIR)/**",
-				);
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = PerformanceBezierTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					"-ObjC++",
-					"-lstdc++",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.milestonemade.$(PRODUCT_NAME:rfc1034identifier)";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
 		66F2EBF11A8DC05100D536E9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
@@ -636,6 +442,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "./PerformanceBezier/**";
 				INFOPLIST_FILE = PerformanceBezier/Info.plist;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_PLATFORM = YES;
@@ -643,6 +450,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.milestonemade.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				USER_HEADER_SEARCH_PATHS = "./**";
 				WRAPPER_EXTENSION = framework;
 			};
 			name = Debug;
@@ -650,7 +458,7 @@
 		66F2EBF21A8DC05100D536E9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
@@ -677,6 +485,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "./PerformanceBezier/**";
 				INFOPLIST_FILE = PerformanceBezier/Info.plist;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				ONLY_ACTIVE_PLATFORM = YES;
@@ -684,6 +493,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.milestonemade.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				USER_HEADER_SEARCH_PATHS = "./**";
 				WRAPPER_EXTENSION = framework;
 			};
 			name = Release;
@@ -696,15 +506,6 @@
 			buildConfigurations = (
 				661B30CD1A7EB43A008549C7 /* Debug */,
 				661B30CE1A7EB43A008549C7 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		66B9D2961A8D5FDF00CAC341 /* Build configuration list for PBXNativeTarget "PerformanceBezierTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				66B9D2971A8D5FDF00CAC341 /* Debug */,
-				66B9D2981A8D5FDF00CAC341 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

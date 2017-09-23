@@ -21,7 +21,7 @@ static char BEZIER_PROPERTIES;
 -(UIBezierPathProperties*) pathProperties{
     UIBezierPathProperties* props = objc_getAssociatedObject(self, &BEZIER_PROPERTIES);
     if(!props){
-        props = [[[UIBezierPathProperties alloc] init] autorelease];
+        props = [[UIBezierPathProperties alloc] init];
         objc_setAssociatedObject(self, &BEZIER_PROPERTIES, props, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
     return props;
@@ -210,10 +210,10 @@ static char BEZIER_PROPERTIES;
 }
 
 - (id)swizzle_initWithCoder:(NSCoder *)decoder{
-    self = [self swizzle_initWithCoder:decoder];
+    UIBezierPath* path = [self swizzle_initWithCoder:decoder];
     UIBezierPathProperties* props = [decoder decodeObjectForKey:@"pathProperties"];
-    objc_setAssociatedObject(self, &BEZIER_PROPERTIES, props, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    return self;
+    objc_setAssociatedObject(path, &BEZIER_PROPERTIES, props, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    return path;
 }
 
 -(void) swizzle_encodeWithCoder:(NSCoder *)aCoder{
@@ -223,7 +223,7 @@ static char BEZIER_PROPERTIES;
 -(void) ahmed_swizzle_applyTransform:(CGAffineTransform)transform{
     // reset our path properties
     BOOL isClosed = [self pathProperties].isClosed;
-    UIBezierPathProperties* props = [[[UIBezierPathProperties alloc] init] autorelease];
+    UIBezierPathProperties* props = [[UIBezierPathProperties alloc] init];
     props.isClosed = isClosed;
     objc_setAssociatedObject(self, &BEZIER_PROPERTIES, props, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     [self ahmed_swizzle_applyTransform:transform];
@@ -472,9 +472,6 @@ static char BEZIER_PROPERTIES;
                                  error:&error];
         [UIBezierPath jr_swizzleMethod:@selector(applyTransform:)
                             withMethod:@selector(ahmed_swizzle_applyTransform:)
-                                 error:&error];
-        [UIBezierPath jr_swizzleMethod:@selector(dealloc)
-                            withMethod:@selector(ahmed_swizzle_dealloc)
                                  error:&error];
     }
 }
