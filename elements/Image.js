@@ -57,7 +57,7 @@ export default class extends Shape {
     }
 }
 
-const RNSVGImage = createReactNativeComponentClass({
+const RNSVGImage = createReactNativeComponentClass('RNSVGImage', () => ({
     validAttributes: ImageAttributes,
     uiViewClassName: 'RNSVGImage'
-});
+}));
